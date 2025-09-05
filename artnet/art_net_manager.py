@@ -46,7 +46,12 @@ class ArtNetManager:
             'sequence_pause': {}  # Pause temporaire des séquences par fixture
         }
 
-        print("✓ ArtNetManager initialized with modular architecture")
+        # NOUVEAU : Timer haute fréquence pour les decays
+        self.decay_timer = None
+        self.decay_update_interval = 16  # 60 FPS (16ms par frame)
+        self.decay_active = False
+        
+        print("✓ ArtNetManager initialized with high-frequency decay system")
     
     # Ajouter cette propriété pour compatibilité
     @property
@@ -151,7 +156,7 @@ class ArtNetManager:
         self.dmx_controller.flush_buffer()
     
     def update_effects(self):
-        """Met à jour les effets avec priorité absolue pour les flashs"""
+        """Met à jour les effets avec decay immédiat et priorité absolue"""
         effects_updated = False
         to_remove = []
         current_time = time.time()
@@ -173,9 +178,12 @@ class ArtNetManager:
             if 'decay' in fixture and fixture['decay'].get('priority_flash', False):
                 decay = fixture['decay']
                 
-                # Calculer la progression du decay
-                elapsed = decay['ticks'] * 0.02
-                progress = elapsed / decay['duration']
+                # MODIFICATION CRITIQUE : Calculer le temps réel écoulé
+                if 'start_time' not in decay:
+                    decay['start_time'] = current_time  # Initialiser si manquant
+                
+                elapsed_real = current_time - decay['start_time']
+                progress = elapsed_real / decay['duration']
                 
                 if progress >= 1.0:
                     # Decay terminé - nettoyer et restaurer
@@ -202,33 +210,45 @@ class ArtNetManager:
                     print(f"[PRIORITY] Flash decay completed on {fixture_name}")
                     
                 else:
-                    # Interpoler avec FORCE ABSOLUE
+                    # INTERPOLER IMMÉDIATEMENT avec courbe de decay
                     start_channels = decay['start_channels']
                     target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
+                    
+                    # COURBE DE DECAY : exponentielle pour un fade plus naturel
+                    decay_curve = 1.0 - (progress ** 2)  # Courbe quadratique pour fade plus rapide au début
                     
                     interpolated_channels = {}
                     for channel in ['red', 'green', 'blue', 'white']:
                         start_val = start_channels.get(channel, 0)
                         target_val = target_channels.get(channel, 0)
-                        interpolated_val = start_val + (target_val - start_val) * progress
-                        interpolated_channels[channel] = max(0, min(255, int(interpolated_val)))
+                        
+                        # Interpolation avec courbe de decay
+                        current_val = start_val * decay_curve + target_val * (1.0 - decay_curve)
+                        interpolated_channels[channel] = max(0, min(255, int(current_val)))
                     
                     # APPLICATION AVEC FORCE ABSOLUE
                     self.dmx_controller.apply_channels_to_fixture(fixture, interpolated_channels, force=True)
                     
-                    decay['ticks'] += 1
                     priority_fixtures_processed.add(fixture_name)
                     effects_updated = True
+                    
+                    # Debug pour voir le progress
+                    if fixture_name == list(self.fixture_manager.get_all_fixtures())[0]['name']:  # Premier fixture seulement
+                        print(f"[DECAY] {fixture_name}: progress={progress:.2f}, curve={decay_curve:.2f}")
             
-            # Traiter les autres decays SEULEMENT si pas de priorité
+            # Traiter les autres decays SEULEMENT si pas de priorité (avec temps réel aussi)
             elif ('decay' in fixture and 
                   fixture_name not in priority_fixtures_processed and
                   not fixture.get('flash_override', False)):
                 
-                # Decay normal (sans priorité)
+                # Decay normal (sans priorité) avec temps réel
                 decay = fixture['decay']
-                elapsed = decay['ticks'] * 0.02
-                progress = elapsed / decay['duration']
+                
+                if 'start_time' not in decay:
+                    decay['start_time'] = current_time
+                
+                elapsed_real = current_time - decay['start_time']
+                progress = elapsed_real / decay['duration']
                 
                 if progress >= 1.0:
                     target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
@@ -239,15 +259,17 @@ class ArtNetManager:
                     start_channels = decay['start_channels']
                     target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
                     
+                    # Même courbe de decay pour les decays normaux
+                    decay_curve = 1.0 - (progress ** 2)
+                    
                     interpolated_channels = {}
                     for channel in ['red', 'green', 'blue', 'white']:
                         start_val = start_channels.get(channel, 0)
                         target_val = target_channels.get(channel, 0)
-                        interpolated_val = start_val + (target_val - start_val) * progress
-                        interpolated_channels[channel] = max(0, min(255, int(interpolated_val)))
+                        current_val = start_val * decay_curve + target_val * (1.0 - decay_curve)
+                        interpolated_channels[channel] = max(0, min(255, int(current_val)))
                     
                     self.dmx_controller.apply_channels_to_fixture(fixture, interpolated_channels)
-                    decay['ticks'] += 1
                     effects_updated = True
         
         # Nettoyer les decays terminés
@@ -386,7 +408,7 @@ class ArtNetManager:
             print("[DEBUG] No active DMX channels")
     
     def send_kick_flash(self, intensity: float = None):
-        """Flash pour les kicks avec PRIORITÉ ABSOLUE sur les séquences"""
+        """Flash pour les kicks avec decay IMMÉDIAT et FLUIDE"""
         try:
             if not self.kick_flash_manager.is_enabled():
                 return False
@@ -395,8 +417,8 @@ class ArtNetManager:
             if intensity is None:
                 intensity = self.kick_flash_manager.get_flash_intensity()
             
-            # AMPLIFIER ENCORE PLUS l'intensité pour la dominance visuelle
-            intensity = min(1.0, intensity * 1.5)  # Augmenté de 1.2 à 1.5
+            # AMPLIFIER l'intensité pour la dominance visuelle
+            intensity = min(1.0, intensity * 1.5)
             
             flash_scene_name = self.kick_flash_manager.get_next_flash_scene()
             if not flash_scene_name:
@@ -415,10 +437,10 @@ class ArtNetManager:
                 decay_duration = flash_scene.get('decay', 0.2)
                 flash_end_time = current_time + decay_duration
                 
-                # FORCER l'arrêt immédiat des decay en cours sur ces fixtures
+                # FORCER l'arrêt immédiat des decay en cours
                 for fixture in kick_fixtures:
                     if 'decay' in fixture:
-                        del fixture['decay']  # Supprimer tout decay existant
+                        del fixture['decay']
                 
                 # Marquer le système comme en flash prioritaire
                 self.flash_priority_system['kick_flash_active'] = True
@@ -431,39 +453,40 @@ class ArtNetManager:
                     self.flash_priority_system['priority_fixtures'].add(fixture_name)
                     self.flash_priority_system['sequence_pause'][fixture_name] = flash_end_time
                     
-                    # NOUVEAU : Forcer l'interruption immédiate des séquences
+                    # Forcer l'interruption immédiate des séquences
                     self._force_pause_sequence_on_fixture(fixture, flash_end_time)
                     
-                    # Calculer la couleur cible (séquence ou noir)
+                    # Calculer la couleur cible
                     target_channels = self._get_target_channels_for_fixture(fixture)
                     
-                    # Appliquer le flash avec INTENSITÉ MAXIMUM
+                    # Appliquer le flash avec intensité maximale
                     scene_channels = flash_scene.get('channels', {})
                     flash_channels = {}
                     
                     for channel_short, base_value in scene_channels.items():
                         channel_long = self.scene_manager.channel_mapping.get(channel_short, channel_short)
-                        # SATURATION COMPLÈTE pour visibilité maximale
                         final_value = min(255, int(base_value * intensity))
                         flash_channels[channel_long] = final_value
                     
-                    # APPLICATION FORCÉE IMMÉDIATE (ignore tout autre système)
+                    # APPLICATION FORCÉE IMMÉDIATE
                     self.dmx_controller.apply_channels_to_fixture(fixture, flash_channels, force=True)
                     
-                    # Configurer le decay avec priorité absolue
+                    # CONFIGURER LE DECAY AVEC SYSTÈME HAUTE FRÉQUENCE
                     fixture['decay'] = {
                         'start_channels': flash_channels.copy(),
                         'target_channels': target_channels,
                         'duration': decay_duration,
-                        'ticks': 0,
+                        'start_time': current_time,
                         'priority_flash': True,
-                        'force_priority': True,  # NOUVEAU : Force la priorité absolue
                         'fixture_name': fixture_name
                     }
                 
+                # DÉMARRER LE TIMER DE DECAY HAUTE FRÉQUENCE
+                self.start_high_frequency_decay()
+                
                 # FLUSH IMMÉDIAT FORCÉ
                 self.dmx_controller.flush_buffer()
-                print(f"[KICK] ✓ PRIORITY Flash '{flash_scene_name}' FORCED on {len(kick_fixtures)} fixtures (intensity={intensity:.2f})")
+                print(f"[KICK] ✓ PRIORITY Flash '{flash_scene_name}' with HIGH-FREQ DECAY on {len(kick_fixtures)} fixtures")
                 return True
             
             return False
@@ -474,18 +497,121 @@ class ArtNetManager:
             traceback.print_exc()
             return False
 
-    def _force_pause_sequence_on_fixture(self, fixture, end_time):
-        """Force la pause immédiate de la séquence sur une fixture"""
-        fixture_name = fixture['name']
+    def start_high_frequency_decay(self):
+        """Démarre le système de decay haute fréquence"""
+        if not self.decay_active:
+            self.decay_active = True
+            self._high_frequency_decay_loop()
+
+    def _high_frequency_decay_loop(self):
+        """Boucle de decay à 60 FPS pour un fade ultra-fluide"""
+        if not self.decay_active:
+            return
         
-        # NOUVELLE APPROCHE : Marquer comme "flash override"
-        fixture['flash_override'] = True
-        fixture['flash_override_end'] = end_time
-        fixture['sequence_paused'] = True
-        fixture['sequence_resume_time'] = end_time
-        
-        # Sauvegarder l'état pour debug
-        print(f"[PRIORITY] Fixture {fixture_name} sequence FORCED PAUSED until {end_time:.2f}")
+        try:
+            current_time = time.time()
+            effects_updated = False
+            to_remove = []
+            
+            # Nettoyer le système de priorité si expiré
+            if (self.flash_priority_system['kick_flash_active'] and 
+                current_time > self.flash_priority_system['kick_flash_end_time']):
+                self.flash_priority_system['kick_flash_active'] = False
+                self.flash_priority_system['priority_fixtures'].clear()
+            
+            fixtures_with_decay = 0
+            
+            for fixture in self.fixture_manager.get_all_fixtures():
+                fixture_name = fixture['name']
+                
+                if 'decay' in fixture:
+                    fixtures_with_decay += 1
+                    decay = fixture['decay']
+                    
+                    # Calculer le progress avec temps réel
+                    start_time = decay.get('start_time', current_time)
+                    elapsed = current_time - start_time
+                    progress = min(1.0, elapsed / decay['duration'])
+                    
+                    if progress >= 1.0:
+                        # Decay terminé
+                        target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
+                        
+                        # APPLICATION FINALE
+                        if decay.get('priority_flash', False):
+                            self.dmx_controller.apply_channels_to_fixture(fixture, target_channels, force=True)
+                            self._cleanup_priority_flash(fixture_name)
+                        else:
+                            self.dmx_controller.apply_channels_to_fixture(fixture, target_channels)
+                        
+                        # Nettoyer les marqueurs
+                        if 'flash_override' in fixture:
+                            del fixture['flash_override']
+                        if 'sequence_paused' in fixture:
+                            fixture['sequence_paused'] = False
+                        
+                        to_remove.append(fixture_name)
+                        effects_updated = True
+                        
+                    else:
+                        # INTERPOLATION FLUIDE avec courbe de decay
+                        start_channels = decay['start_channels']
+                        target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
+                        
+                        # COURBE EXPONENTIELLE pour fade naturel
+                        # Essayer différentes courbes selon le type de decay
+                        if progress < 0.1:
+                            # Les premiers 10% : decay rapide pour effet visible
+                            decay_curve = 1.0 - (progress * 5)  # Decay rapide initial
+                        else:
+                            # Le reste : decay exponentiel plus doux
+                            adjusted_progress = (progress - 0.1) / 0.9
+                            decay_curve = 0.5 * (1.0 - adjusted_progress) ** 1.5  # Courbe exponentielle douce
+                        
+                        decay_curve = max(0.0, min(1.0, decay_curve))
+                        
+                        interpolated_channels = {}
+                        for channel in ['red', 'green', 'blue', 'white']:
+                            start_val = start_channels.get(channel, 0)
+                            target_val = target_channels.get(channel, 0)
+                            
+                            # Interpolation linéaire avec courbe
+                            current_val = start_val * decay_curve + target_val * (1.0 - decay_curve)
+                            interpolated_channels[channel] = max(0, min(255, int(current_val)))
+                        
+                        # APPLICATION avec force si prioritaire
+                        if decay.get('priority_flash', False):
+                            self.dmx_controller.apply_channels_to_fixture(fixture, interpolated_channels, force=True)
+                        else:
+                            self.dmx_controller.apply_channels_to_fixture(fixture, interpolated_channels)
+                        
+                        effects_updated = True
+            
+            # Nettoyer les decays terminés
+            for fixture_name in to_remove:
+                fixture = self.fixture_manager.get_fixture_by_name(fixture_name)
+                if fixture and 'decay' in fixture:
+                    del fixture['decay']
+            
+            # Flush si des changements ont été effectués
+            if effects_updated:
+                self.dmx_controller.flush_buffer()
+            
+            # Continuer la boucle si on a encore des decays actifs
+            if fixtures_with_decay > len(to_remove):
+                # Programmer la prochaine mise à jour à 60 FPS
+                import threading
+                decay_timer = threading.Timer(self.decay_update_interval / 1000.0, self._high_frequency_decay_loop)
+                decay_timer.daemon = True
+                decay_timer.start()
+            else:
+                # Plus de decays actifs, arrêter la boucle
+                self.decay_active = False
+                print("[DECAY] High-frequency decay loop ended")
+                
+        except Exception as e:
+            print(f"[DECAY] Error in high-frequency loop: {e}")
+            self.decay_active = False
     
     def get_kick_flash_config(self) -> Dict:
         """Retourne la configuration actuelle des flashs de kick"""
@@ -506,7 +632,7 @@ class ArtNetManager:
         # Sauvegarder la configuration
         self.kick_flash_manager.save_config()
         print(f"[KICK] Configuration updated: {self.kick_flash_manager.get_config_summary()}")
-    
+
     def _get_target_channels_for_fixture(self, fixture):
         """Détermine les canaux cibles pour le decay selon la séquence active"""
         fixture_band = fixture.get('band', 'Bass')
@@ -541,7 +667,20 @@ class ArtNetManager:
         
         # Par défaut, revenir au noir
         return {'red': 0, 'green': 0, 'blue': 0, 'white': 0}
-    
+
+    def _force_pause_sequence_on_fixture(self, fixture, end_time):
+        """Force la pause immédiate de la séquence sur une fixture"""
+        fixture_name = fixture['name']
+        
+        # NOUVELLE APPROCHE : Marquer comme "flash override"
+        fixture['flash_override'] = True
+        fixture['flash_override_end'] = end_time
+        fixture['sequence_paused'] = True
+        fixture['sequence_resume_time'] = end_time
+        
+        # Sauvegarder l'état pour debug
+        print(f"[PRIORITY] Fixture {fixture_name} sequence FORCED PAUSED until {end_time:.2f}")
+
     def _cleanup_priority_flash(self, fixture_name):
         """Nettoie le système de priorité après un flash"""
         self.flash_priority_system['priority_fixtures'].discard(fixture_name)

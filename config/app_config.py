@@ -3,8 +3,12 @@ class AppConfig:
     
     # Interface utilisateur
     WINDOW_TITLE = "Light Light Show"
-    WINDOW_SIZE = "900x1000"
-    UPDATE_INTERVAL = 33  # ms (30 FPS)
+    WINDOW_SIZE = "1200x1000"
+    UPDATE_INTERVAL = 20  # Réduit de 50ms à 20ms pour des decays plus fluides
+    
+    # Configuration DMX
+    DMX_REFRESH_RATE = 40  # Augmenté de 30Hz à 40Hz
+    DMX_UNIVERSE = 0
     
     # Paths des fichiers de configuration
     FIXTURES_FILE = "fixtures.json"
@@ -33,3 +37,8 @@ class AppConfig:
         'High-Mid\n500-2.5kHz',
         'Treble\n2.5-20kHz'
     ]
+    
+    # Configuration par défaut
+    DEFAULT_IP = "192.168.18.28"
+    DEFAULT_SUBNET = 0
+    DEFAULT_UNIVERSE = 0

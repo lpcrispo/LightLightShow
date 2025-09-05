@@ -261,38 +261,35 @@ class MainWindow(tk.Tk):
                 hasattr(self.audio_processor, attr_name))
 
     def update_loop(self):
-        """Boucle principale de mise à jour avec gestion d'erreur améliorée"""
+        """Boucle principale de mise à jour avec fréquence accrue pour les decays"""
         try:
             current_time = time.time()
             
-            # Mise à jour des effets DMX
+            # AUGMENTER la fréquence des mises à jour pour un decay plus fluide
             if hasattr(self, 'artnet_manager') and self.artnet_manager:
                 self.artnet_manager.update_effects()
             
-            # Mise à jour des affichages
+            # Mise à jour des affichages (moins fréquente)
             if hasattr(self, 'fixture_view') and self.fixture_view:
                 self.fixture_view.update_display()
             
-            # Mise à jour des statuts sustained
+            # Autres mises à jour...
             if (self._has_audio_processor_attr('sustained_detection') and
                 hasattr(self, 'spectrum_view')):
                 for band, status in self.audio_processor.sustained_detection.items():
                     self.spectrum_view.update_sustained_status(band, status)
             
-            # Mise à jour des statuts de fade
             if (self._has_audio_processor_attr('fade_detection') and
                 hasattr(self, 'spectrum_view')):
                 for band, fade_info in self.audio_processor.fade_detection.items():
                     self.spectrum_view.update_fade_status(band, fade_info)
             
-            # Mise à jour des seuils automatiques
             if (self._has_audio_processor_attr('auto_thresholds') and
                 hasattr(self, 'spectrum_view')):
                 for band, thresh_info in self.audio_processor.auto_thresholds.items():
                     self.spectrum_view.update_auto_threshold_display(
                         band, thresh_info['value'], thresh_info['auto'])
             
-            # Mise à jour du BPM
             if (hasattr(self, 'audio_processor') and 
                 hasattr(self.audio_processor, 'current_bpm') and
                 hasattr(self, 'audio_controls')):
@@ -301,11 +298,9 @@ class MainWindow(tk.Tk):
                     
         except Exception as e:
             print(f"Error in update loop: {e}")
-            # Ne pas imprimer le traceback complet à chaque fois pour éviter le spam
-            # traceback.print_exc()
         
-        # Programmer la prochaine mise à jour
-        self.after(AppConfig.UPDATE_INTERVAL, self.update_loop)
+        # RÉDUIRE l'intervalle pour des decays plus fluides
+        self.after(AppConfig.UPDATE_INTERVAL // 2, self.update_loop)  # 2x plus rapide
 
     def cleanup_memory(self):
         """Nettoyage périodique de la mémoire pour éviter l'overflow"""
