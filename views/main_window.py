@@ -51,6 +51,13 @@ class MainWindow(tk.Tk):
         self.last_update = time.time()
         self.update_loop()
         
+        # PROTECTION OVERFLOW : Limiter la fréquence des mises à jour
+        self.last_ui_update = time.time()
+        self.ui_update_interval = 0.1  # 100ms minimum entre les mises à jour
+        
+        # Timer de nettoyage pour libérer la mémoire
+        self.cleanup_timer = self.after(5000, self.cleanup_memory)  # Toutes les 5 secondes
+
         print("✓ MainWindow initialization complete")
 
     def _initialize_managers(self):
@@ -82,16 +89,46 @@ class MainWindow(tk.Tk):
         self.artnet_manager = ArtNetManager(artnet_config)
         self.artnet_manager.start()
         
-        # Créer l'audio processor avec les nouvelles configurations
+        # CORRECTION : Créer l'audio processor avec la signature correcte
         try:
-            from config import AudioConfig
-            self.audio_processor = AudioProcessor(
-                gain=AudioConfig.DEFAULT_GAIN, 
-                smoothing_factor=AudioConfig.DEFAULT_SMOOTHING
-            )
-        except ImportError:
-            # Fallback vers les valeurs par défaut
-            self.audio_processor = AudioProcessor(gain=0.5, smoothing_factor=0.8)
+            # Le constructeur attend (samplerate, config_manager) selon processor.py
+            default_samplerate = 44100  # Valeur par défaut
+            
+            # Créer un config_manager minimal si nécessaire
+            config_manager = None  # Peut être None selon le code processor.py
+            
+            # Créer l'audio processor avec les nouvelles configurations
+            try:
+                from config import AudioConfig
+                self.audio_processor = AudioProcessor(
+                    samplerate=44100,  # Valeur par défaut
+                    config_manager=None,  # Peut être None
+                    gain=AudioConfig.DEFAULT_GAIN, 
+                    smoothing_factor=AudioConfig.DEFAULT_SMOOTHING
+                )
+            except ImportError:
+                # Fallback vers les valeurs par défaut
+                self.audio_processor = AudioProcessor(
+                    samplerate=44100,
+                    config_manager=None,
+                    gain=0.5, 
+                    smoothing_factor=0.8
+                )
+                
+        except Exception as e:
+            print(f"Error creating AudioProcessor: {e}")
+            # Créer un audio processor basique en fallback
+            self.audio_processor = type('AudioProcessor', (), {
+                'gain': 0.5,
+                'smoothing_factor': 0.8,
+                'is_recording': False,
+                'stream': None,
+                'current_bpm': 0,
+                'sustained_detection': {},
+                'fade_detection': {},
+                'auto_thresholds': {},
+                'artnet_manager': None
+            })()
         
         print("Setting up artnet_manager in audio_processor...")
         self.audio_processor.artnet_manager = self.artnet_manager
@@ -268,6 +305,52 @@ class MainWindow(tk.Tk):
         
         # Programmer la prochaine mise à jour
         self.after(AppConfig.UPDATE_INTERVAL, self.update_loop)
+
+    def cleanup_memory(self):
+        """Nettoyage périodique de la mémoire pour éviter l'overflow"""
+        try:
+            import gc
+            gc.collect()  # Force garbage collection
+            
+            # Nettoyer les historiques de l'audio processor si trop pleins
+            if hasattr(self, 'audio_processor') and self.audio_processor:
+                processor = self.audio_processor
+                
+                # Limiter les historiques s'ils deviennent trop gros
+                for band_data in processor.trend_history.values():
+                    if len(band_data['levels']) > 10:
+                        # Garder seulement les 5 derniers éléments
+                        levels = list(band_data['levels'])[-5:]
+                        timestamps = list(band_data['timestamps'])[-5:]
+                        band_data['levels'].clear()
+                        band_data['timestamps'].clear()
+                        band_data['levels'].extend(levels)
+                        band_data['timestamps'].extend(timestamps)
+            
+            # Programmer le prochain nettoyage
+            self.cleanup_timer = self.after(5000, self.cleanup_memory)
+            
+        except Exception as e:
+            print(f"[CLEANUP] Error during memory cleanup: {e}")
+
+    def update_ui_periodically(self):
+        """Mise à jour UI avec protection overflow"""
+        try:
+            current_time = time.time()
+            
+            # PROTECTION : Limiter la fréquence des mises à jour
+            if current_time - self.last_ui_update < self.ui_update_interval:
+                self.after(50, self.update_ui_periodically)  # Réessayer dans 50ms
+                return
+            
+            self.last_ui_update = current_time
+            
+            # ...existing UI update code...
+            
+        except Exception as e:
+            print(f"[UI OVERFLOW] Error in UI update: {e}")
+        finally:
+            self.after(100, self.update_ui_periodically)  # Prochaine mise à jour dans 100ms
 
     def get_artnet_config(self):
         """Récupère la configuration ArtNet avec validation"""

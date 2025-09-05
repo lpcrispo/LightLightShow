@@ -11,18 +11,21 @@ from .filters import AudioFilters
 from artnet.art_net_manager import ArtNetManager
 
 class AudioProcessor:
-    def __init__(self, gain=0.5, smoothing_factor=0.4):
+    def __init__(self, samplerate, config_manager=None, gain=0.5, smoothing_factor=0.8):
         self.stream = None
         self.monitor_stream = None
         self.is_recording = False
-        self.gain = gain
-        self.smoothing_factor = smoothing_factor
+        self.gain = gain  # Utiliser le paramètre passé
+        self.smoothing_factor = smoothing_factor  # Utiliser le paramètre passé
         self.previous_levels = [0, 0, 0, 0]
-        self.samplerate = 44100
+        self.samplerate = samplerate
 
         # Paramètres d'auto-normalisation
         self.history_size = 100
         self.band_history = [deque(maxlen=self.history_size) for _ in range(4)]
+        
+        # CORRECTION : Ajouter les attributs manquants
+        self.trend_threshold = 0.1  # Seuil pour détecter les changements de tendance
         
         # Composants spécialisés
         self.kick_detector = None
@@ -77,18 +80,29 @@ class AudioProcessor:
         }
         
         # Configuration des tendances (maintenu)
-        self.trend_window = 20
+        self.trend_window_size = 5  # Réduit de 20
         self.trend_history = {
             band: {
-                'levels': deque(maxlen=self.trend_window),
-                'last_state': None,
-                'last_trigger': time.time(),
+                'levels': deque(maxlen=self.trend_window_size),
+                'timestamps': deque(maxlen=self.trend_window_size),
+                'last_trend': None,
+                'last_trend_time': 0,
+                'last_state': None,  # AJOUT : État précédent pour la comparaison
+                'last_trigger': 0,   # AJOUT : Dernier déclenchement
+                'trend_cooldown': 0.5,  # Augmenté pour réduire la fréquence
                 'above_threshold': False
-            }
-            for band in self.freq_ranges.keys()
+            } for band in self.freq_ranges.keys()
         }
-        self.trigger_cooldown = 0.5
-        self.trend_threshold = 0.05
+
+        # OPTIMISATION : Réduire les historiques auto-thresholds
+        self.auto_thresholds = {}
+        for band in self.freq_ranges.keys():
+            self.auto_thresholds[band] = {
+                'value': 0.15,
+                'auto': True,
+                'history': deque(maxlen=50),  # Réduit de 200 à 50
+                'last_update': 0
+            }
 
         # Configuration du monitoring
         self.monitor_band = "Mix"
@@ -138,12 +152,8 @@ class AudioProcessor:
 
         # Initialiser les composants spécialisés
         try:
-            self.kick_detector = KickDetector(
-                sr=self.samplerate,
-                threshold_k=3.0,
-                min_energy=0.008,
-                refractory_ms=200
-            )
+            # CORRECTION : Utiliser les paramètres corrects du KickDetector
+            self.kick_detector = KickDetector(samplerate=self.samplerate)
             print("✓ KickDetector initialized")
         except Exception as e:
             print(f"Warning: Failed to initialize KickDetector: {e}")
@@ -273,17 +283,81 @@ class AudioProcessor:
             traceback.print_exc()
             return [0, 0, 0, 0]
 
+    def process_audio_data(self, audio_data):
+        """Traitement audio optimisé contre l'overflow"""
+        try:
+            # LIMITATION CRITIQUE : Traiter seulement si pas trop de données
+            if len(audio_data) > 2048:
+                # Sous-échantillonner agressivement les gros blocs
+                audio_data = audio_data[::2]
+                print(f"[OVERFLOW PROTECTION] Subsampled audio from {len(audio_data)*2} to {len(audio_data)}")
+            
+            # Vérifier la charge système
+            current_time = time.time()
+            if hasattr(self, '_last_process_time'):
+                processing_interval = current_time - self._last_process_time
+                if processing_interval < 0.05:  # Moins de 50ms depuis le dernier traitement
+                    return  # Ignorer ce bloc pour éviter l'overflow
+            
+            self._last_process_time = current_time
+            
+            # Mise à jour du BPM si disponible
+            if self.bpm_detector:  # CORRECTION
+                self.bpm_detector.add_audio_data(audio_data)  # CORRECTION
+                if self.bpm_detector.should_update_bpm():  # CORRECTION
+                    self.bpm_detector.calculate_bpm()  # CORRECTION
+
+            # Analyse spectrale
+            if self.audio_filters:
+                spec_block = audio_data.copy()
+                window = np.hanning(len(spec_block))
+                spec_block *= window
+                spectrum = np.abs(np.fft.fft(spec_block)) / len(spec_block)
+                freqs = np.fft.fftfreq(len(spectrum), 1/self.samplerate)
+
+                normalized_levels = self.audio_filters.normalize_spectrum_levels(
+                    spectrum, freqs, self.freq_ranges, self.band_history,
+                    self.previous_levels, self.smoothing_factor
+                )
+            else:
+                normalized_levels = [0.5, 0.3, 0.2, 0.1]
+
+            # NOUVEAU : Mise à jour des seuils automatiques
+            self._update_auto_thresholds(normalized_levels)
+
+            # NOUVEAU: Analyse fade + tendance + kick (fusion)
+            current_time = time.time()
+            for level, band in zip(normalized_levels, self.freq_ranges.keys()):
+                self._analyze_fade_to_black(band, level, current_time)
+                threshold = self.auto_thresholds[band]['value']
+                self._analyze_band(band, level, threshold, audio_data)
+                self._analyze_sustained_level(band, level, threshold)
+
+            return normalized_levels
+        except Exception as e:
+            print(f"[OVERFLOW PROTECTION] Error in process_audio_data: {e}")
+            return  # Abandonner ce bloc en cas d'erreur
+
     def _update_auto_thresholds(self, levels):
-        """Met à jour automatiquement les seuils basés sur l'historique - VERSION PLUS SENSIBLE"""
+        """Mise à jour optimisée des seuils"""
+        current_time = time.time()
+        
         for i, band in enumerate(self.auto_thresholds.keys()):
             if not self.auto_thresholds[band]['auto']:
                 continue
+            
+            # LIMITATION : Mettre à jour seulement toutes les 2 secondes
+            if current_time - self.auto_thresholds[band].get('last_update', 0) < 2.0:
+                continue
                 
+            self.auto_thresholds[band]['last_update'] = current_time
+            
             level = levels[i]
             history = self.auto_thresholds[band]['history']
             history.append(level)
             
-            if len(history) >= 100:
+            # Calcul seulement si assez d'historique
+            if len(history) >= 20:  # Réduit de 100 à 20
                 hist_array = np.array(history)
                 
                 # Calculer des percentiles pour un seuil plus sensible
@@ -508,19 +582,20 @@ class AudioProcessor:
         return self._analyze_band(band, level, threshold)
 
     def _analyze_trend_with_history(self, band, level):
-        """Analyse la tendance sur la fenêtre temporelle"""
+        """Analyse la tendance sur la fenêtre temporelle - CORRIGÉE"""
         history = self.trend_history[band]
         current_time = time.time()
         
         history['levels'].append(level)
         
-        if len(history['levels']) < self.trend_window:
+        if len(history['levels']) < self.trend_window_size:
             return None
 
-        window_third = self.trend_window // 3
+        window_third = self.trend_window_size // 3
         first_third = np.mean(list(history['levels'])[:window_third])
         last_third = np.mean(list(history['levels'])[-window_third:])
         
+        # CORRECTION : Utiliser self.trend_threshold qui est maintenant défini
         if abs(last_third - first_third) < self.trend_threshold:
             current_state = 'stable'
         elif last_third > first_third:
@@ -528,8 +603,9 @@ class AudioProcessor:
         else:
             current_state = 'falling'
 
-        if (current_state != history['last_state'] and 
-            current_time - history['last_trigger'] >= self.trigger_cooldown):
+        # CORRECTION : Utiliser les bonnes clés du dictionnaire
+        if (current_state != history.get('last_state') and 
+            current_time - history.get('last_trigger', 0) >= history['trend_cooldown']):
             history['last_state'] = current_state
             history['last_trigger'] = current_time
             return current_state

@@ -110,17 +110,24 @@ class SequenceManager:
         print("✓ Sequence thread stopped")
     
     def _sequence_loop(self):
-        """Boucle principale de gestion des séquences - VERSION CORRIGÉE"""
-        print("✓ Sequence loop started")
+        """Boucle optimisée contre l'overflow"""
+        print("✓ Sequence loop started (optimized)")
         
-        while self.running:  # CORRECTION : Ne pas s'arrêter si pas de séquences
+        while self.running:
             try:
                 current_time = time.time()
                 
-                # Continuer même s'il n'y a pas de séquences actives
                 if not self.active_sequences:
-                    time.sleep(0.1)
+                    time.sleep(0.1)  # Pause plus longue quand inactif
                     continue
+                
+                # OPTIMISATION : Traiter moins fréquemment
+                if hasattr(self, '_last_loop_time'):
+                    if current_time - self._last_loop_time < 0.05:  # 50ms minimum
+                        time.sleep(0.01)
+                        continue
+                
+                self._last_loop_time = current_time
                 
                 # Traiter chaque séquence active
                 for band, seq_info in list(self.active_sequences.items()):
@@ -158,14 +165,12 @@ class SequenceManager:
                         
                         #print(f"[SEQ] {band} step {current_step_idx} applied ({current_step.get('scene', 'unknown')})")
                 
-                # Pause pour éviter la surcharge CPU
-                time.sleep(0.01)  # 10ms
+                # PAUSE plus importante pour réduire la charge CPU
+                time.sleep(0.02)  # Augmenté de 0.01 à 0.02
                 
             except Exception as e:
-                print(f"Error in sequence loop: {e}")
-                import traceback
-                traceback.print_exc()
-                time.sleep(0.1)
+                print(f"[SEQ OVERFLOW] Error in sequence loop: {e}")
+                time.sleep(0.1)  # Pause plus longue en cas d'erreur
         
         print("✓ Sequence loop ended")
     

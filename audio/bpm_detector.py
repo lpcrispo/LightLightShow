@@ -14,28 +14,33 @@ except ImportError:
 class BPMDetector:
     def __init__(self, samplerate):
         self.samplerate = samplerate
-        self.buffer_size = samplerate * 4  # 4 secondes pour une meilleure analyse
+        # RÉDUCTION DRASTIQUE du buffer pour éviter l'overflow
+        self.buffer_size = samplerate * 2  # Réduit de 4 à 2 secondes
         self.audio_buffer = deque(maxlen=self.buffer_size)
         self.last_bpm_time = time.time()
-        self.bpm_update_interval = 2.0
+        self.bpm_update_interval = 3.0  # Augmenté de 2 à 3 secondes
         self.current_bpm = 0
 
-        # Historique pour lisser les résultats
-        self.bpm_history = deque(maxlen=5)
+        # Historique plus petit
+        self.bpm_history = deque(maxlen=3)  # Réduit de 5 à 3
 
-        # Configuration simplifiée sans aubio
-        self.win_s = 1024
-        self.hop_s = 512
+        # Configuration simplifiée
+        self.win_s = 512  # Réduit de 1024 à 512
+        self.hop_s = 256  # Réduit de 512 à 256
         self.beats = []
         self.beat_times = []
         
         if LIBROSA_AVAILABLE:
-            print("✓ Librosa tempo detector ready")
+            print("✓ Librosa tempo detector ready (optimized)")
         else:
             print("Warning: No tempo detection library available")
 
     def add_audio_data(self, audio_data):
-        """Ajoute des données audio au buffer"""
+        """Ajoute des données audio au buffer avec limitation"""
+        # LIMITATION : Ajouter seulement 1 échantillon sur 4 pour réduire la charge
+        if len(audio_data) > 1024:
+            audio_data = audio_data[::4]  # Sous-échantillonnage
+        
         self.audio_buffer.extend(audio_data)
 
     def should_update_bpm(self):

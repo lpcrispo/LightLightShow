@@ -13,54 +13,72 @@ except ImportError:
     LIBROSA_AVAILABLE = False
 
 class KickDetector:
-    def __init__(self, sr, 
-                 low_hz=30, high_hz=170,
-                 threshold=0.3, threshold_k=2.0,
-                 min_energy=0.005,
-                 refractory_ms=150):
-        self.sr = sr
-        self.low_hz = low_hz
-        self.high_hz = high_hz
-        self.threshold = threshold
-        self.threshold_k = threshold_k
-        self.min_energy = min_energy
-        self.refractory = refractory_ms / 1000.0
-        self.last_kick_time = 0.0
-
+    def __init__(self, samplerate):
+        self.samplerate = samplerate
+        self.sr = samplerate  # Alias pour compatibilité
+        
+        # RÉDUCTION des historiques pour éviter l'overflow
+        self.flux_history = deque(maxlen=10)  # Réduit de 50
+        self.env_history = deque(maxlen=10)   # Réduit de 50
+        
+        # AJOUT : Attributs manquants pour le sample buffer
+        self.sample_buffer = deque(maxlen=samplerate)  # Buffer d'1 seconde
+        
+        # Paramètres optimisés
+        self.min_energy = 0.01
+        self.refractory = 0.2  # Augmenté de 0.1 à 0.2 pour réduire la fréquence
+        self.last_kick_time = 0
+        
+        # AJOUT : Paramètres pour librosa
         self.librosa_available = LIBROSA_AVAILABLE
-        
-        # Configuration pour le traitement audio
-        self.win_s = 1024
-        self.hop_s = 512
-        
-        # Buffer plus grand pour librosa (besoin de plus de contexte)
-        self.buffer_duration = 2.0  # 2 secondes de buffer
-        self.sample_buffer = deque(maxlen=int(sr * self.buffer_duration))
-        self.flux_history = deque(maxlen=200)
-        self.env_history = deque(maxlen=200)
-        self.prev_spectrum = None
-        
-        # Buffer pour détecter les onsets récents
-        self.onset_buffer = deque(maxlen=10)
-        self.last_onset_check = 0.0
+        self.last_onset_check = 0
         self.onset_check_interval = 0.1  # Vérifier les onsets toutes les 100ms
+        self.hop_s = 256
         
-        print("Using scipy/librosa for kick detection with buffered onset detection")
-            
-        # Filtre passe-bas pour isoler les kicks
-        nyq = sr / 2
-        high_norm = min(high_hz / nyq, 0.99)
+        # États pour éviter les recalculs
+        self.prev_spectrum = None
+        self._processing_enabled = True
+        
+        # AJOUT : Initialisation du filtre passe-bas pour les kicks
         try:
-            self.b, self.a = scipy.signal.butter(4, high_norm, btype='lowpass')
+            nyquist = samplerate / 2
+            low_cutoff = 150 / nyquist  # Fréquence de coupure pour les basses
+            self.b, self.a = scipy.signal.butter(4, low_cutoff, btype='low')
             self.zi = scipy.signal.lfilter_zi(self.b, self.a)
         except Exception as e:
-            print(f"Error creating filter: {e}")
-            self.b = np.array([1.0])
-            self.a = np.array([1.0])
-            self.zi = np.array([0.0])
+            print(f"Warning: Could not initialize kick filter: {e}")
+            # Fallback : pas de filtrage
+            self.b = [1]
+            self.a = [1]  
+            self.zi = np.array([0])
+        
+        # AJOUT : Paramètres de seuil
+        self.threshold = 0.6  # Seuil de détection
+        
+        if LIBROSA_AVAILABLE:
+            print("✓ Librosa kick detector ready (optimized)")
+        else:
+            print("⚠ Using scipy fallback for kick detection (optimized)")
 
     def process_block(self, block):
+        """Traitement optimisé contre l'overflow"""
         try:
+            # PROTECTION : Ignorer les blocs trop gros
+            if len(block) > 1024:
+                block = block[::2]  # Sous-échantillonnage
+            
+            # PROTECTION : Vérifier si on peut traiter (pas de surcharge)
+            if not self._processing_enabled:
+                return self._default_result()
+            
+            # Désactiver temporairement si trop d'appels rapides
+            current_time = time.time()
+            if hasattr(self, '_last_process_time'):
+                if current_time - self._last_process_time < 0.05:  # 50ms minimum
+                    return self._default_result()
+            
+            self._last_process_time = current_time
+            
             if len(block) == 0:
                 return self._default_result()
             
@@ -86,7 +104,6 @@ class KickDetector:
             kick_detected = False
             onset_strength = 0.0
             combined = 0.0
-            current_time = time.time()
             
             # Utilisation de librosa pour la détection d'onset (moins fréquemment)
             if (self.librosa_available and 
@@ -123,7 +140,6 @@ class KickDetector:
                     if len(recent_onsets) > 0:
                         # Calculer la force d'onset basée sur l'énergie locale
                         latest_onset = recent_onsets[-1]
-                        onset_frame = int(latest_onset * self.sr / self.hop_s)
                         
                         # Calculer la force d'onset basée sur l'augmentation d'énergie
                         if len(self.env_history) >= 5:
@@ -156,13 +172,7 @@ class KickDetector:
             # Détection finale avec seuils équilibrés
             energy_ok = env > self.min_energy
             time_ok = (current_time - self.last_kick_time) > self.refractory
-            threshold_ok = combined > 0.6  # RÉDUIT de 0.8 à 0.6 (compromis)
-            
-            # Debug seulement pour les cas intéressants
-            #if env > 0.01 or combined > 0.4:
-            #    print(f"[KICK DEBUG] env={env:.5f} (>{self.min_energy}? {energy_ok}) "
-            #          f"combined={combined:.3f} (>0.6? {threshold_ok}) "
-            #          f"time_ok={time_ok}")
+            threshold_ok = combined > self.threshold
             
             if energy_ok and time_ok and threshold_ok:
                 kick_detected = True
@@ -210,8 +220,8 @@ class KickDetector:
                     
             self.flux_history.append(flux)
             
-            # Normalisation adaptative PLUS RESTRICTIVE
-            if len(self.flux_history) >= 20 and len(self.env_history) >= 20:  # Retour à 20
+            # Normalisation adaptative
+            if len(self.flux_history) >= 20 and len(self.env_history) >= 20:
                 flux_mean = np.mean(list(self.flux_history)[-20:])
                 env_mean = np.mean(list(self.env_history)[-20:])
                 
@@ -219,14 +229,14 @@ class KickDetector:
                 env_norm = env / (env_mean + 1e-6)
                 
                 # Score combiné avec accent sur l'énergie pour les kicks
-                score = 0.7 * env_norm + 0.3 * flux_norm  # Équilibré
-                return min(score, 2.0)  # Réduit de 3.0 à 2.0
+                score = 0.7 * env_norm + 0.3 * flux_norm
+                return min(score, 2.0)
             else:
                 # Fallback plus restrictif
                 if len(self.env_history) >= 10:
                     recent_mean = np.mean(list(self.env_history)[-10:])
                     if recent_mean > 0:
-                        return min(max(0, (env / recent_mean) - 1.2), 1.5)  # Seuil plus élevé
+                        return min(max(0, (env / recent_mean) - 1.2), 1.5)
                 return 0.0
                 
         except Exception as e:
@@ -236,28 +246,16 @@ class KickDetector:
     def _default_result(self):
         """Résultat par défaut en cas d'erreur"""
         return {
-            'kick_detected': False,
-            'strength': 0.0,
-            'energy': 0.0,
-            'combined': 0.0
+            'kick': False,
+            'env': 0.0,
+            'onset': 0.0,
+            'combined': 0.0,
+            'env_norm': 0.0,
+            'onset_norm': 0.0
         }
-    
-    def _safe_process_block(self, processing_func, block):
-        """Traitement sécurisé d'un bloc audio"""
-        try:
-            if len(block) == 0:
-                return self._default_result()
-            
-            block = np.asarray(block, dtype=np.float32)
-            block = np.nan_to_num(block, nan=0.0, posinf=0.0, neginf=0.0)
-            
-            return processing_func(block)
-        except Exception as e:
-            print(f"Error processing audio block: {e}")
-            return self._default_result()
 
     def adjust_sensitivity(self, sensitivity):
         """Ajuste la sensibilité (0.0 - 1.0)"""
-        self.threshold = 0.5 + (sensitivity * 0.5)  # Range plus élevé : 0.5-1.0
+        self.threshold = 0.5 + (sensitivity * 0.5)  # Range : 0.5-1.0
         self.min_energy = 0.008 + (sensitivity * 0.012)  # Énergie minimale plus élevée
         print(f"Kick sensitivity adjusted: threshold={self.threshold:.3f}, min_energy={self.min_energy:.5f}")
