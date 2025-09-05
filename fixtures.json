@@ -1,0 +1,147 @@
+{
+    "fixtures": [
+        {
+            "name": "Par LED Bass 1",
+            "startChannel": 1,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "Bass",
+            "responds_to_kicks": true,
+            "kick_sensitivity": 1.0
+        },
+        {
+            "name": "Par LED Bass 2",
+            "startChannel": 21,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "Bass",
+            "responds_to_kicks": true,
+            "kick_sensitivity": 0.8
+        },
+        {
+            "name": "Par LED Low-Mid 1",
+            "startChannel": 5,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "Low-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid 1",
+            "startChannel": 9,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid 2",
+            "startChannel": 13,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid 3",
+            "startChannel": 25,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid 4",
+            "startChannel": 29,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid 5",
+            "startChannel": 33,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid 6",
+            "startChannel": 37,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        },
+        {
+            "name": "Par LED High-Mid Kick",
+            "startChannel": 41,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "High-Mid",
+            "responds_to_kicks": true,
+            "kick_sensitivity": 0.7
+        },
+        {
+            "name": "Par LED Treble 1",
+            "startChannel": 17,
+            "channels": {
+                "red": 1,
+                "green": 2,
+                "blue": 3,
+                "white": 4
+            },
+            "band": "Treble",
+            "responds_to_kicks": false,
+            "kick_sensitivity": 0.0
+        }
+    ]
+}

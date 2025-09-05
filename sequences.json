@@ -1,0 +1,106 @@
+{
+  "sequences": [
+    {
+      "name": "bass-pulse",
+      "band": "Bass",
+      "type": "pulse",
+      "description": "Pulsation rouge continue pour les basses",
+      "steps": [
+        {
+          "scene": "band-bass",
+          "duration": 0.5,
+          "type": "all"
+        },
+        {
+          "scene": "band-bass",
+          "duration": 0.25,
+          "type": "all",
+          "intensity_multiplier": 0.6
+        }
+      ],
+      "loop": true,
+      "min_intensity": 0.15,
+      "base_intensity": 0.4
+    },
+    {
+      "name": "mid-glow",
+      "band": "Low-Mid",
+      "type": "glow",
+      "description": "Éclairage vert continu avec variations pour les médiums bas",
+      "steps": [
+        {
+          "scene": "band-mid",
+          "duration": 1.0,
+          "type": "all"
+        },
+        {
+          "scene": "band-mid",
+          "duration": 0.5,
+          "type": "all",
+          "intensity_multiplier": 0.8
+        }
+      ],
+      "loop": true,
+      "min_intensity": 0.2,
+      "base_intensity": 0.5
+    },
+    {
+      "name": "highmid-wave",
+      "band": "High-Mid",
+      "type": "wave",
+      "description": "Vague bleue continue pour les médiums hauts",
+      "steps": [
+        {
+          "scene": "band-treble",
+          "duration": 0.75,
+          "type": "wave"
+        },
+        {
+          "scene": "band-treble",
+          "duration": 0.25,
+          "type": "wave",
+          "intensity_multiplier": 0.7
+        }
+      ],
+      "loop": true,
+      "min_intensity": 0.15,
+      "base_intensity": 0.45
+    },
+    {
+      "name": "treble-sparkle",
+      "band": "Treble",
+      "type": "sparkle",
+      "description": "Scintillement rapide avec éclairage de base pour les aigus",
+      "steps": [
+        {
+          "scene": "band-treble",
+          "duration": 0.3,
+          "type": "all"
+        },
+        {
+          "scene": "flash-white",
+          "duration": 0.1,
+          "type": "sparkle"
+        },
+        {
+          "scene": "band-treble",
+          "duration": 0.2,
+          "type": "all",
+          "intensity_multiplier": 0.6
+        }
+      ],
+      "loop": true,
+      "min_intensity": 0.1,
+      "base_intensity": 0.35
+    }
+  ],
+
+  "sequence_types": {
+    "pulse": "Pulsation continue avec variations d'intensité",
+    "glow": "Éclairage continu stable avec légères variations",
+    "wave": "Effet de vague progressive continue",
+    "sparkle": "Base continue avec éclats occasionnels",
+    "chase": "Une fixture à la fois en rotation",
+    "all": "Toutes les fixtures simultanément"
+  }
+}

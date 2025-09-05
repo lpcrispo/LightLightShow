@@ -1,0 +1,120 @@
+{
+  "scenes": [
+    {
+      "name": "flash-blue",
+      "type": "flash",
+      "channels": {
+        "r": 0,
+        "g": 0,
+        "b": 255,
+        "w": 0
+      },
+      "decay": 0.2
+    },
+    {
+      "name": "flash-red",
+      "type": "flash",
+      "channels": {
+        "r": 255,
+        "g": 0,
+        "b": 0,
+        "w": 0
+      },
+      "decay": 0.2
+    },
+    {
+      "name": "flash-white",
+      "type": "flash",
+      "channels": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "w": 255
+      },
+      "decay": 0.2
+    },
+    {
+      "name": "flash-yellow",
+      "type": "flash",
+      "channels": {
+        "r": 255,
+        "g": 255,
+        "b": 0,
+        "w": 0
+      },
+      "decay": 0.15
+    },
+    {
+      "name": "blue-fade",
+      "type": "fade",
+      "channels": {
+        "r": 0,
+        "g": 0,
+        "b": 255,
+        "w": 0
+      },
+      "duration": 1.0
+    },
+    {
+      "name": "red-fade",
+      "type": "fade",
+      "channels": {
+        "r": 255,
+        "g": 0,
+        "b": 0,
+        "w": 0
+      },
+      "duration": 1.0
+    },
+    {
+      "name": "on",
+      "type": "static",
+      "channels": {
+        "r": 255,
+        "g": 255,
+        "b": 255,
+        "w": 100
+      }
+    },
+    {
+      "name": "off",
+      "type": "static",
+      "channels": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "w": 0
+      }
+    },
+    {
+      "name": "band-bass",
+      "type": "static",
+      "channels": {
+        "r": 255,
+        "g": 0,
+        "b": 0,
+        "w": 0
+      }
+    },
+    {
+      "name": "band-mid",
+      "type": "static",
+      "channels": {
+        "r": 0,
+        "g": 255,
+        "b": 0,
+        "w": 0
+      }
+    },
+    {
+      "name": "band-treble",
+      "type": "static",
+      "channels": {
+        "r": 0,
+        "g": 0,
+        "b": 255,
+        "w": 0
+      }
+    }
+  ]
+}
