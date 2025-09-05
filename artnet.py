@@ -355,7 +355,7 @@ class ArtNetManager:
                     absolute_channel = self._get_absolute_channel(fixture, short_name)
                     if 0 <= absolute_channel < 512:
                         self.dmx_send_buffer[absolute_channel] = value
-                        print(f"  Setting channel {absolute_channel+1} ({self.COLOR_MAP[short_name]}) to {value}")
+                        #print(f"  Setting channel {absolute_channel+1} ({self.COLOR_MAP[short_name]}) to {value}")
 
         # Debug - afficher les valeurs non nulles
         non_zero = [(i+1, v) for i, v in enumerate(self.dmx_send_buffer) if v > 0]
