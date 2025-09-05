@@ -636,10 +636,10 @@ class ArtNetManager:
                     'name': 'idle-white',
                     'channels': channels
                 }
-                self._apply_scene_to_fixture(scene, fx)
+                self.apply_scene_to_fixture(scene, [fx])  # Correction: sans underscore
 
             # Pousser univers après mise à jour
-            self._flush_universe()
+            self.send_dmx(self.config.universe, self.dmx_send_buffer)  # Correction: remplacer _flush_universe
             print(f"✓ Idle white applied (intensity={level:.3f})")
         except Exception as e:
             print(f"Error setting idle white: {e}")
