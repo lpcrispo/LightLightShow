@@ -20,7 +20,7 @@ class SpectrumView(ttk.Frame):
         graph_frame = ttk.Frame(parent)
         graph_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.fig = Figure(figsize=(8, 3))
+        self.fig = Figure(figsize=(3, 3))  # Réduit de 8 à 2.7 (environ un tiers)
         self.ax = self.fig.add_subplot(111)
         self.canvas = FigureCanvasTkAgg(self.fig, master=graph_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)

@@ -33,10 +33,10 @@ def main():
         logger.info(f"Python version: {sys.version}")
         logger.info(f"Working directory: {os.getcwd()}")
         
-        # Import ici pour éviter les problèmes de dépendances circulaires
+        # Import et lancement de l'interface moderne
         from views.main_window import MainWindow
         
-        # Créer et lancer l'application avec la signature existante
+        # Créer et lancer l'application
         app = MainWindow()
         
         logger.info("Application initialized successfully")
@@ -46,22 +46,10 @@ def main():
         
     except KeyboardInterrupt:
         logger.info("Application interrupted by user")
-    except ImportError as e:
-        logger.error(f"Import error: {e}")
-        logger.error("Make sure all required modules are installed")
-        # Fallback vers l'interface simple si disponible
-        try:
-            from ui import Application
-            logger.info("Using fallback UI")
-            app = Application()
-            app.mainloop()
-        except Exception as e2:
-            logger.error(f"Fallback also failed: {e2}")
-            raise
     except Exception as e:
-        logger.error(f"Critical error: {e}")
+        logger.error(f"Failed to start application: {e}")
         logger.error(traceback.format_exc())
-        raise
+        sys.exit(1)
     finally:
         logger.info("Application shutdown")
 
