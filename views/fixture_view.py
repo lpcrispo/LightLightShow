@@ -61,7 +61,7 @@ class FixtureView(ttk.Frame):
                 frame.grid(row=final_row, column=final_col, padx=3, pady=3, sticky="n")
                 
                 # Nom de la fixture avec indicateur de kick (plus compact)
-                name_text = fixture['name'].replace('Par LED ', '').replace(f'{band} ', '')
+                name_text = fixture['name']  # Utiliser le nom complet
                 if fixture.get('responds_to_kicks', False):
                     name_text += " 🥁"
                 name_label = ttk.Label(frame, text=name_text, font=('Arial', 7))
