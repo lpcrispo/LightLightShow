@@ -72,6 +72,14 @@ class ArtNetManager:
         self.sequence_thread = None
         self.sequence_running = False
         
+        # Déplacer le mapping en constante de classe
+        self.COLOR_MAP = {
+            'r': 'red',
+            'g': 'green', 
+            'b': 'blue',
+            'w': 'white'
+        }
+
         print(f"✓ Art-Net manager initialized for {self.config.ip}:{self.config.universe}")
 
     def _create_default_sequences(self):
@@ -325,6 +333,12 @@ class ArtNetManager:
             
         return fixture_values
 
+    def _get_absolute_channel(self, fixture, channel_name):
+        """Calcule l'adresse absolue d'un canal pour une fixture"""
+        start_channel = fixture['startChannel'] - 1
+        channel_offset = fixture['channels'][self.COLOR_MAP[channel_name]] - 1
+        return start_channel + channel_offset
+
     def apply_scene(self, scene_name, fixtures):
         """Applique une scène aux fixtures spécifiées"""
         scene = next((s for s in self.scenes_config['scenes'] if s['name'] == scene_name), None)
@@ -334,37 +348,14 @@ class ArtNetManager:
         
         print(f"[SCENE] Applying '{scene_name}' to {len(fixtures)} fixtures")
         
-        # Map des noms de canaux courts vers les noms complets
-        color_map = {
-            'r': 'red',
-            'g': 'green', 
-            'b': 'blue',
-            'w': 'white'
-        }
-            
         # Pour chaque fixture spécifiée
         for fixture in fixtures:
-            start_channel = fixture['startChannel'] - 1  # Index 0-based, SANS offset +2
-            print(f"Processing fixture '{fixture['name']}' starting at channel {start_channel+1}")
-            
             if scene['type'] == 'flash':
-                # Enregistre l'effet avec son temps de decay
-                self.active_effects[fixture['name']] = {
-                    'type': 'flash',
-                    'start_time': time.time(),
-                    'decay': scene['decay'],
-                    'channels': scene['channels'],
-                    'fixture': fixture
-                }
-                
-                # Applique les valeurs initiales
                 for short_name, value in scene['channels'].items():
-                    channel_offset = fixture['channels'][color_map[short_name]] - 1
-                    absolute_channel = start_channel + channel_offset
-                    
+                    absolute_channel = self._get_absolute_channel(fixture, short_name)
                     if 0 <= absolute_channel < 512:
                         self.dmx_send_buffer[absolute_channel] = value
-                        print(f"  Setting channel {absolute_channel+1} ({color_map[short_name]}) to {value}")
+                        print(f"  Setting channel {absolute_channel+1} ({self.COLOR_MAP[short_name]}) to {value}")
 
         # Debug - afficher les valeurs non nulles
         non_zero = [(i+1, v) for i, v in enumerate(self.dmx_send_buffer) if v > 0]
@@ -379,14 +370,6 @@ class ArtNetManager:
         current_time = time.time()
         to_remove = []
         
-        # Map des noms de canaux courts vers les noms complets
-        color_map = {
-            'r': 'red',
-            'g': 'green',
-            'b': 'blue', 
-            'w': 'white'
-        }
-        
         effects_updated = False
         
         for fixture_name, effect in self.active_effects.items():
@@ -397,7 +380,7 @@ class ArtNetManager:
                 if elapsed >= effect['decay']:
                     # Effet terminé, éteindre la fixture
                     for short_name in effect['channels'].keys():
-                        channel_offset = effect['fixture']['channels'][color_map[short_name]] - 1
+                        channel_offset = effect['fixture']['channels'][self.COLOR_MAP[short_name]] - 1
                         absolute_channel = start_channel + channel_offset
                         if 0 <= absolute_channel < 512:
                             self.dmx_send_buffer[absolute_channel] = 0
@@ -407,7 +390,7 @@ class ArtNetManager:
                     # Calcul du fade
                     ratio = 1.0 - (elapsed / effect['decay'])
                     for short_name, value in effect['channels'].items():
-                        channel_offset = effect['fixture']['channels'][color_map[short_name]] - 1
+                        channel_offset = effect['fixture']['channels'][self.COLOR_MAP[short_name]] - 1
                         absolute_channel = start_channel + channel_offset
                         if 0 <= absolute_channel < 512:
                             new_value = int(value * ratio)
@@ -582,15 +565,13 @@ class ArtNetManager:
             return
             
         # Utiliser la logique existante d'apply_scene mais sans les logs excessifs
-        color_map = {'r': 'red', 'g': 'green', 'b': 'blue', 'w': 'white'}
-        
         for fixture in fixtures:
             start_channel = fixture['startChannel'] - 1
             
             if scene['type'] == 'flash':
                 # Pour les séquences, pas besoin d'effects timer
                 for short_name, value in scene['channels'].items():
-                    channel_offset = fixture['channels'][color_map[short_name]] - 1
+                    channel_offset = fixture['channels'][self.COLOR_MAP[short_name]] - 1
                     absolute_channel = start_channel + channel_offset
                     
                     if 0 <= absolute_channel < 512:
@@ -598,7 +579,7 @@ class ArtNetManager:
             else:
                 # Scène statique
                 for short_name, value in scene['channels'].items():
-                    channel_offset = fixture['channels'][color_map[short_name]] - 1
+                    channel_offset = fixture['channels'][self.COLOR_MAP[short_name]] - 1
                     absolute_channel = start_channel + channel_offset
                     
                     if 0 <= absolute_channel < 512:
@@ -643,3 +624,8 @@ class ArtNetManager:
             print(f"✓ Idle white applied (intensity={level:.3f})")
         except Exception as e:
             print(f"Error setting idle white: {e}")
+
+    def _debug_log(self, message, level='INFO'):
+        """Gestion centralisée des logs de debug"""
+        if self.debug_mode:  # Ajouter un flag debug
+            print(f"[{level}] {message}")

@@ -217,6 +217,11 @@ class MainWindow(tk.Tk):
         except Exception as e:
             print(f"[TEST] Error clearing fixtures: {e}")
 
+    def _has_audio_processor_attr(self, attr_name):
+        """Vérifie si l'audio processor a un attribut spécifique"""
+        return (hasattr(self, 'audio_processor') and 
+                hasattr(self.audio_processor, attr_name))
+
     def update_loop(self):
         """Boucle principale de mise à jour avec gestion d'erreur améliorée"""
         try:
@@ -231,22 +236,19 @@ class MainWindow(tk.Tk):
                 self.fixture_view.update_display()
             
             # Mise à jour des statuts sustained
-            if (hasattr(self, 'audio_processor') and 
-                hasattr(self.audio_processor, 'sustained_detection') and
+            if (self._has_audio_processor_attr('sustained_detection') and
                 hasattr(self, 'spectrum_view')):
                 for band, status in self.audio_processor.sustained_detection.items():
                     self.spectrum_view.update_sustained_status(band, status)
             
             # Mise à jour des statuts de fade
-            if (hasattr(self, 'audio_processor') and 
-                hasattr(self.audio_processor, 'fade_detection') and
+            if (self._has_audio_processor_attr('fade_detection') and
                 hasattr(self, 'spectrum_view')):
                 for band, fade_info in self.audio_processor.fade_detection.items():
                     self.spectrum_view.update_fade_status(band, fade_info)
             
-            # Mise à jour des seuils automatiques dans l'affichage
-            if (hasattr(self, 'audio_processor') and 
-                hasattr(self.audio_processor, 'auto_thresholds') and
+            # Mise à jour des seuils automatiques
+            if (self._has_audio_processor_attr('auto_thresholds') and
                 hasattr(self, 'spectrum_view')):
                 for band, thresh_info in self.audio_processor.auto_thresholds.items():
                     self.spectrum_view.update_auto_threshold_display(
