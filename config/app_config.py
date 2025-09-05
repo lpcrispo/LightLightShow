@@ -3,7 +3,7 @@ class AppConfig:
     
     # Interface utilisateur
     WINDOW_TITLE = "Light Light Show"
-    WINDOW_SIZE = "1800x1000"
+    WINDOW_SIZE = "900x1000"
     UPDATE_INTERVAL = 33  # ms (30 FPS)
     
     # Paths des fichiers de configuration
@@ -15,7 +15,7 @@ class AppConfig:
     UI_CONFIG = {
         'max_fixtures_per_column': 3,
         'fixture_canvas_size': (60, 60),
-        'spectrum_graph_size': (8, 3),
+        'spectrum_graph_size': (3, 3),
         'control_scale_length': 200
     }
     

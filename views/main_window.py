@@ -170,7 +170,7 @@ class MainWindow(tk.Tk):
             default_config = {
                 'artnet': {'ip': '192.168.18.28', 'subnet': 0, 'universe': 0, 'start_channel': 1},
                 'audio': {'thresholds': {}, 'monitor_band': 'Mix', 'monitor_volume': 0.5},
-                'ui': {'window_geometry': '1800x1000'}
+                'ui': {'window_geometry': '900x1000'}
             }
             
             config_data = self.file_manager.load_json('lightshow_config.json', default_config)
