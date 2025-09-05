@@ -19,6 +19,14 @@ class DMXController:
         self.dmx_buffer = np.zeros(512, dtype=np.uint8)
         self.last_sent_buffer = np.zeros(512, dtype=np.uint8)
         
+        # AJOUT : Mapping des canaux pour apply_channels_to_fixture
+        self.channel_offsets = {
+            'red': 0,
+            'green': 1, 
+            'blue': 2,
+            'white': 3
+        }
+        
         # Thread de rafraîchissement continu
         self.refresh_thread = None
         self.refresh_running = False
@@ -109,43 +117,41 @@ class DMXController:
                 return int(self.dmx_buffer[channel])
         return 0
     
-    def apply_channels_to_fixture(self, fixture: Dict, channels: Dict[str, int]):
-        """Applique des valeurs de canaux à une fixture - VERSION CORRIGÉE"""
-        try:
-            start_channel = fixture.get('startChannel', 1)
-            fixture_channels = fixture.get('channels', {})
-            
-            #print(f"[DMX DEBUG] Applying to fixture '{fixture.get('name', 'unknown')}':")
-            #print(f"[DMX DEBUG]   Start channel: {start_channel}")
-            #print(f"[DMX DEBUG]   Fixture channels config: {fixture_channels}")
-            #print(f"[DMX DEBUG]   Values to apply: {channels}")
-            
-            with self.buffer_lock:
-                for color, value in channels.items():
-                    if color in fixture_channels:
-                        # CORRECTION CRITIQUE : Le mapping dans fixtures.json utilise des OFFSETS relatifs
-                        # Exemple: startChannel=1, channels={'red': 1} = Canal DMX absolu = 1 + (1-1) = 1
-                        # Mais en index 0-based pour le buffer = canal 1 = buffer[0]
+    def apply_channels_to_fixture(self, fixture: Dict, channels: Dict[str, int], force=False):
+        """Applique des canaux à une fixture avec priorité absolue si force=True"""
+        fixture_name = fixture['name']
+        
+        # Gérer les deux formats de clés
+        start_channel = fixture.get('start_channel') or fixture.get('startChannel')
+        if start_channel is None:
+            print(f"[DMX] Warning: No start_channel found for fixture {fixture_name}")
+            return
+        
+        # Si force=True, ÉCRASER TOUT (priorité absolue)
+        if force:
+            print(f"[DMX FORCE] Applying channels to {fixture_name} with ABSOLUTE PRIORITY")
+        
+        # Appliquer les canaux avec protection thread
+        for channel_name, value in channels.items():
+            if channel_name in self.channel_offsets:
+                dmx_address = start_channel + self.channel_offsets[channel_name] - 1
+                if 0 <= dmx_address < 512:
+                    with self.buffer_lock:
+                        # FORCE : Écraser la valeur même si elle existe
+                        old_value = self.dmx_buffer[dmx_address]
+                        self.dmx_buffer[dmx_address] = max(0, min(255, int(value)))
                         
-                        channel_offset = fixture_channels[color]  # Exemple: 1, 2, 3, 4
-                        dmx_channel_absolute = start_channel + channel_offset - 1  # Exemple: 1 + 1 - 1 = 1
-                        dmx_buffer_index = dmx_channel_absolute - 1  # Canal 1 = buffer[0]
-                        
-                        #print(f"[DMX DEBUG]   {color}: offset={channel_offset}, absolute={dmx_channel_absolute}, buffer_idx={dmx_buffer_index}")
-                        
-                        if 0 <= dmx_buffer_index < 512:
-                            old_value = self.dmx_buffer[dmx_buffer_index]
-                            self.dmx_buffer[dmx_buffer_index] = max(0, min(255, value))
-                            #print(f"[DMX DEBUG]   Buffer[{dmx_buffer_index}]: {old_value} -> {self.dmx_buffer[dmx_buffer_index]}")
-                        #else:
-                            #print(f"[DMX DEBUG]   ❌ Invalid buffer index: {dmx_buffer_index}")
-                    #else:
-                        #print(f"[DMX DEBUG]   ⚠ Color '{color}' not found in fixture channels")
-                        
-        except Exception as e:
-            print(f"[DMX ERROR] Failed to apply channels to fixture {fixture.get('name', 'unknown')}: {e}")
-            import traceback
-            traceback.print_exc()
+                        # Debug pour les changements forcés
+                        if force and old_value != int(value) and int(value) > 0:
+                            print(f"[DMX FORCE] Ch{dmx_address+1}: {old_value} → {int(value)}")
+                    
+                    # Sauvegarder dans la fixture
+                    fixture[f'current_{channel_name}'] = value
+        
+        # Debug occasionnel
+        if fixture_name == "Par1" and any(v > 0 for v in channels.values()):
+            active_channels = [(k, v) for k, v in channels.items() if v > 0]
+            print(f"[DMX] Applied to {fixture_name}: {active_channels}")
     
     def clear_all_channels(self):
         """Remet tous les canaux à zéro"""

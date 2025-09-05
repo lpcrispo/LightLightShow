@@ -537,3 +537,28 @@ AttributeError: '_tkinter.tkapp' object has no attribute 'control_frame'
 2025-09-05 16:15:32,717 - __main__ - INFO - Working directory: C:\dev\LightLightShow
 2025-09-05 16:15:35,323 - __main__ - INFO - Application initialized successfully
 2025-09-05 16:18:01,654 - __main__ - INFO - Application shutdown
+2025-09-05 16:24:32,152 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:24:32,153 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:24:32,153 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:24:35,478 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:24:43,738 - __main__ - INFO - Application shutdown
+2025-09-05 16:28:31,214 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:28:31,215 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:28:31,215 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:28:34,174 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:28:54,896 - __main__ - INFO - Application shutdown
+2025-09-05 16:33:26,023 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:33:26,024 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:33:26,024 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:33:28,781 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:35:42,671 - __main__ - INFO - Application shutdown
+2025-09-05 16:40:19,039 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:40:19,039 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:40:19,040 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:40:22,481 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:40:57,052 - __main__ - INFO - Application shutdown
+2025-09-05 16:42:53,330 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:42:53,330 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:42:53,331 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:42:56,332 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:45:48,107 - __main__ - INFO - Application shutdown

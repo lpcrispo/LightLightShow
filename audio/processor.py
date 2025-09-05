@@ -620,18 +620,15 @@ class AudioProcessor:
         if hasattr(self, 'artnet_manager') and self.artnet_manager:
             try:
                 if band == 'Bass' and event_type == 'peak':
-                    #print("[FLASH] Sending kick flash to Art-Net!")
-                    kick_fixtures = [f for f in self.artnet_manager.fixtures_config['fixtures']
-                                   if f.get('responds_to_kicks', False)]
-                    if kick_fixtures:
-                        import random
-                        flash_scenes = ['flash-white', 'flash-red', 'flash-blue']
-                        scene = random.choice(flash_scenes)
-                        self.artnet_manager.apply_scene(scene, kick_fixtures)
-                        #print(f"[FLASH] Applied {scene} to {len(kick_fixtures)} kick-responsive fixtures")
+                    # CORRECTION : Utiliser la nouvelle méthode send_kick_flash avec priorité
+                    success = self.artnet_manager.send_kick_flash()
+                    if success:
+                        print(f"[KICK] Priority flash triggered from peak detection")
+                    else:
+                        print(f"[KICK] Flash failed or disabled")
                         
             except Exception as e:
-                print(f"[EVENT] Error sending to ArtNet: {e}")
+                print(f"[EVENT] Error sending kick flash: {e}")
 
     # Méthodes utilitaires (maintenues)
     def stop(self):

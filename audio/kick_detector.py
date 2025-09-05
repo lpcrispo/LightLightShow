@@ -13,7 +13,7 @@ except ImportError:
     LIBROSA_AVAILABLE = False
 
 class KickDetector:
-    def __init__(self, samplerate):
+    def __init__(self, samplerate, **kwargs):
         self.samplerate = samplerate
         self.sr = samplerate  # Alias pour compatibilité
         
@@ -24,10 +24,20 @@ class KickDetector:
         # AJOUT : Attributs manquants pour le sample buffer
         self.sample_buffer = deque(maxlen=samplerate)  # Buffer d'1 seconde
         
-        # Paramètres optimisés
-        self.min_energy = 0.01
-        self.refractory = 0.2  # Augmenté de 0.1 à 0.2 pour réduire la fréquence
-        self.last_kick_time = 0
+        # NOUVEAU : Paramètres pour plus de sensibilité
+        self.threshold = kwargs.get('threshold', 0.15)  # Réduit de 0.25
+        self.min_energy = kwargs.get('min_energy', 0.005)  # Réduit de 0.01
+        self.refractory = kwargs.get('refractory', 0.15)  # Réduit de 0.2s à 0.15s
+        
+        # AJOUT CRITIQUE : Attribut manquant last_kick_time
+        self.last_kick_time = 0.0
+        
+        # NOUVEAU : Mode haute fréquence pour les kicks
+        self.high_frequency_mode = kwargs.get('high_frequency_mode', True)
+        self.quick_detection_threshold = 0.1  # Seuil encore plus bas pour détection rapide
+        
+        # Buffer pour éviter les doubles détections rapides
+        self.recent_kicks = deque(maxlen=10)
         
         # AJOUT : Paramètres pour librosa
         self.librosa_available = LIBROSA_AVAILABLE
@@ -52,16 +62,15 @@ class KickDetector:
             self.a = [1]  
             self.zi = np.array([0])
         
-        # AJOUT : Paramètres de seuil
-        self.threshold = 0.6  # Seuil de détection
-        
         if LIBROSA_AVAILABLE:
             print("✓ Librosa kick detector ready (optimized)")
         else:
             print("⚠ Using scipy fallback for kick detection (optimized)")
 
+        print(f"✓ KickDetector initialized with enhanced sensitivity (threshold={self.threshold})")
+
     def process_block(self, block):
-        """Traitement optimisé contre l'overflow"""
+        """Traitement optimisé avec sensibilité accrue"""
         try:
             # PROTECTION : Ignorer les blocs trop gros
             if len(block) > 1024:
@@ -169,23 +178,48 @@ class KickDetector:
             else:
                 combined = scipy_score
                 
-            # Détection finale avec seuils équilibrés
-            energy_ok = env > self.min_energy
-            time_ok = (current_time - self.last_kick_time) > self.refractory
-            threshold_ok = combined > self.threshold
+            # NOUVEAU : Mode haute fréquence avec seuil adaptatif
+            if self.high_frequency_mode:
+                # Seuil adaptatif basé sur l'historique récent
+                if len(self.env_history) >= 10:
+                    recent_avg = np.mean(list(self.env_history)[-10:])
+                    adaptive_threshold = max(self.quick_detection_threshold, recent_avg * 1.5)
+                else:
+                    adaptive_threshold = self.quick_detection_threshold
+                
+                # Détection rapide avec seuil plus bas
+                quick_detection = (env > self.min_energy * 0.5 and 
+                                 combined > adaptive_threshold and
+                                 (current_time - self.last_kick_time) > (self.refractory * 0.7))
+                
+                if quick_detection:
+                    kick_detected = True
+                    self.last_kick_time = current_time
+                    self.recent_kicks.append(current_time)
+                    print(f"[KICK] ✓ QUICK DETECTED! env={env:.5f} combined={combined:.3f} adaptive_thresh={adaptive_threshold:.3f}")
             
-            if energy_ok and time_ok and threshold_ok:
-                kick_detected = True
-                self.last_kick_time = current_time
-                #print(f"[KICK] ✓ DETECTED! env={env:.5f} combined={combined:.3f}")
+            # Détection normale (si pas de détection rapide)
+            if not kick_detected:
+                energy_ok = env > self.min_energy
+                time_ok = (current_time - self.last_kick_time) > self.refractory
+                threshold_ok = combined > self.threshold
+                
+                if energy_ok and time_ok and threshold_ok:
+                    kick_detected = True
+                    self.last_kick_time = current_time
+                    self.recent_kicks.append(current_time)
+                    print(f"[KICK] ✓ NORMAL DETECTED! env={env:.5f} combined={combined:.3f}")
 
             return {
                 'kick': kick_detected,
+                'intensity': min(1.0, max(0.1, combined * 2.0)),  # Intensité amplifiée
                 'env': float(env),
                 'onset': onset_strength,
                 'combined': combined,
-                'env_norm': float(env / 0.01),  # Normalisation ajustée
-                'onset_norm': onset_strength
+                'env_norm': float(env / 0.01),
+                'onset_norm': onset_strength,
+                'quick_mode': self.high_frequency_mode,
+                'recent_kicks_count': len([k for k in self.recent_kicks if current_time - k < 2.0])
             }
             
         except Exception as e:
@@ -220,7 +254,7 @@ class KickDetector:
                     
             self.flux_history.append(flux)
             
-            # Normalisation adaptative
+            # Normalisation adapative
             if len(self.flux_history) >= 20 and len(self.env_history) >= 20:
                 flux_mean = np.mean(list(self.flux_history)[-20:])
                 env_mean = np.mean(list(self.env_history)[-20:])

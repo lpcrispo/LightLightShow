@@ -32,10 +32,11 @@ class SequenceManager:
         """Setter pour sequence_running"""
         self.running = value
     
-    def set_managers(self, scene_manager, dmx_controller):
+    def set_managers(self, scene_manager, dmx_controller, artnet_manager=None):
         """Définit les managers pour l'application des scènes"""
         self.scene_manager = scene_manager
         self.dmx_controller = dmx_controller
+        self.artnet_manager = artnet_manager  # AJOUT : Référence vers ArtNetManager
     
     def start_sequence(self, sequence_name: str, band: str, fixtures: List[Dict], 
                       base_intensity: float = 0.3):
@@ -174,24 +175,63 @@ class SequenceManager:
         
         print("✓ Sequence loop ended")
     
-    def _apply_sequence_step(self, fixtures: List[Dict], step: Dict, intensity: float):
-        """Applique un step de séquence - RESTAURÉE depuis artnet.py.old"""
+    def _apply_sequence_step(self, fixtures, step, intensity):
+        """Applique un step de séquence en respectant les overrides de flash"""
         scene_name = step.get('scene')
-        if not scene_name or not self.scene_manager or not self.dmx_controller:
+        if not scene_name:
             return
         
-        # Récupérer la scène depuis le SceneManager
-        scene = self.scene_manager.get_scene(scene_name)
-        if not scene:
-            print(f"Scene '{scene_name}' not found for sequence step")
-            return
+        step_multiplier = step.get('intensity_multiplier', 1.0)
+        final_intensity = intensity * step_multiplier
         
-        # Appliquer le multiplicateur d'intensité du step si présent
-        step_intensity = intensity
-        if 'intensity_multiplier' in step:
-            step_intensity = intensity * step['intensity_multiplier']
+        # Filtrer les fixtures qui ne sont PAS en flash override
+        available_fixtures = []
+        for fixture in fixtures:
+            if not fixture.get('name'):
+                continue
+                
+            fixture_name = fixture['name']
+            
+            # VÉRIFICATION 1 : Flash override actif
+            if fixture.get('flash_override', False):
+                override_end = fixture.get('flash_override_end', 0)
+                if time.time() < override_end:
+                    # Flash override encore actif, ignorer cette fixture
+                    continue
+                else:
+                    # Override expiré, nettoyer
+                    fixture['flash_override'] = False
+                    if 'flash_override_end' in fixture:
+                        del fixture['flash_override_end']
+            
+            # VÉRIFICATION 2 : Système de priorité global
+            if hasattr(self.artnet_manager, 'flash_priority_system'):
+                if fixture_name in self.artnet_manager.flash_priority_system['priority_fixtures']:
+                    # Fixture encore en priorité, ignorer
+                    continue
+            
+            # VÉRIFICATION 3 : Pause séquence classique
+            if fixture.get('sequence_paused', False):
+                resume_time = fixture.get('sequence_resume_time', 0)
+                if time.time() < resume_time:
+                    continue
+                else:
+                    fixture['sequence_paused'] = False
+                    if 'sequence_resume_time' in fixture:
+                        del fixture['sequence_resume_time']
+            
+            # Fixture disponible pour la séquence
+            available_fixtures.append(fixture)
         
-        # **CRUCIAL : Appliquer la scène avec l'intensité**
-        self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, step_intensity)
-
-        #print(f"[SEQ] Applied scene '{scene_name}' to {len(fixtures)} fixtures with intensity {step_intensity:.2f}")
+        # Appliquer la séquence aux fixtures disponibles
+        if available_fixtures and self.scene_manager:
+            try:
+                self.scene_manager.apply_scene_to_fixtures(scene_name, available_fixtures, final_intensity)
+                
+                # Debug pour vérifier que les séquences ne "écrasent" pas les flashs
+                if len(available_fixtures) < len(fixtures):
+                    blocked_count = len(fixtures) - len(available_fixtures)
+                    #print(f"[SEQ] {blocked_count}/{len(fixtures)} fixtures blocked by flash priority")
+                    
+            except Exception as e:
+                print(f"[SEQ] Error applying scene {scene_name}: {e}")
