@@ -234,15 +234,28 @@ class KickDetector:
             return 0.0
 
     def _default_result(self):
+        """Résultat par défaut en cas d'erreur"""
         return {
-            'kick': False,
-            'env': 0.0,
-            'onset': 0.0,
-            'combined': 0.0,
-            'env_norm': 0.0,
-            'onset_norm': 0.0
+            'kick_detected': False,
+            'strength': 0.0,
+            'energy': 0.0,
+            'combined': 0.0
         }
-        
+    
+    def _safe_process_block(self, processing_func, block):
+        """Traitement sécurisé d'un bloc audio"""
+        try:
+            if len(block) == 0:
+                return self._default_result()
+            
+            block = np.asarray(block, dtype=np.float32)
+            block = np.nan_to_num(block, nan=0.0, posinf=0.0, neginf=0.0)
+            
+            return processing_func(block)
+        except Exception as e:
+            print(f"Error processing audio block: {e}")
+            return self._default_result()
+
     def adjust_sensitivity(self, sensitivity):
         """Ajuste la sensibilité (0.0 - 1.0)"""
         self.threshold = 0.5 + (sensitivity * 0.5)  # Range plus élevé : 0.5-1.0

@@ -72,7 +72,7 @@ class ArtNetManager:
         self.sequence_thread = None
         self.sequence_running = False
         
-        # Déplacer le mapping en constante de classe
+        # Déplacer en attribut de classe pour éviter les redéfinitions
         self.COLOR_MAP = {
             'r': 'red',
             'g': 'green', 
