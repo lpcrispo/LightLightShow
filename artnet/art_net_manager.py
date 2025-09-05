@@ -66,7 +66,7 @@ class ArtNetManager:
     
     def apply_scene(self, scene_name: str, fixtures: List[Dict]):
         """Applique une scène à une liste de fixtures"""
-        print(f"[ARTNET] Applying scene '{scene_name}' to {len(fixtures)} fixtures")
+        #print(f"[ARTNET] Applying scene '{scene_name}' to {len(fixtures)} fixtures")
         return self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, 1.0)
     
     def apply_scene_to_band(self, scene_name: str, band: str, kick_responsive_only: bool = False):
@@ -105,7 +105,7 @@ class ArtNetManager:
             print(f"No sequence mapping found for band {band}")
             return False
             
-        print(f"[ARTNET] Starting sequence '{sequence_name}' for band {band} ({len(fixtures)} fixtures)")
+        #print(f"[ARTNET] Starting sequence '{sequence_name}' for band {band} ({len(fixtures)} fixtures)")
         
         return self.sequence_manager.start_sequence(sequence_name, band, fixtures, intensity)
     

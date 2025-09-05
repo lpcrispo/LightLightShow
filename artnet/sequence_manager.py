@@ -156,7 +156,7 @@ class SequenceManager:
                         seq_info['step_index'] += 1
                         seq_info['last_step_time'] = current_time
                         
-                        print(f"[SEQ] {band} step {current_step_idx} applied ({current_step.get('scene', 'unknown')})")
+                        #print(f"[SEQ] {band} step {current_step_idx} applied ({current_step.get('scene', 'unknown')})")
                 
                 # Pause pour éviter la surcharge CPU
                 time.sleep(0.01)  # 10ms
@@ -188,5 +188,5 @@ class SequenceManager:
         
         # **CRUCIAL : Appliquer la scène avec l'intensité**
         self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, step_intensity)
-        
-        print(f"[SEQ] Applied scene '{scene_name}' to {len(fixtures)} fixtures with intensity {step_intensity:.2f}")
+
+        #print(f"[SEQ] Applied scene '{scene_name}' to {len(fixtures)} fixtures with intensity {step_intensity:.2f}")

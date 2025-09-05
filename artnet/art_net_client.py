@@ -88,8 +88,8 @@ class ArtNetClient:
             
             # Debug pour vérifier les données actives
             active_channels = [i for i, v in enumerate(dmx_data) if v > 0]
-            if active_channels:
-                print(f"✓ Sent {len(packet)} bytes to {self.target_ip}:6454 | Active channels: {len(active_channels)} | Max: {max(dmx_data)}")
+            #if active_channels:
+                #print(f"✓ Sent {len(packet)} bytes to {self.target_ip}:6454 | Active channels: {len(active_channels)} | Max: {max(dmx_data)}")
             
             return True
             

@@ -115,10 +115,10 @@ class DMXController:
             start_channel = fixture.get('startChannel', 1)
             fixture_channels = fixture.get('channels', {})
             
-            print(f"[DMX DEBUG] Applying to fixture '{fixture.get('name', 'unknown')}':")
-            print(f"[DMX DEBUG]   Start channel: {start_channel}")
-            print(f"[DMX DEBUG]   Fixture channels config: {fixture_channels}")
-            print(f"[DMX DEBUG]   Values to apply: {channels}")
+            #print(f"[DMX DEBUG] Applying to fixture '{fixture.get('name', 'unknown')}':")
+            #print(f"[DMX DEBUG]   Start channel: {start_channel}")
+            #print(f"[DMX DEBUG]   Fixture channels config: {fixture_channels}")
+            #print(f"[DMX DEBUG]   Values to apply: {channels}")
             
             with self.buffer_lock:
                 for color, value in channels.items():
@@ -131,16 +131,16 @@ class DMXController:
                         dmx_channel_absolute = start_channel + channel_offset - 1  # Exemple: 1 + 1 - 1 = 1
                         dmx_buffer_index = dmx_channel_absolute - 1  # Canal 1 = buffer[0]
                         
-                        print(f"[DMX DEBUG]   {color}: offset={channel_offset}, absolute={dmx_channel_absolute}, buffer_idx={dmx_buffer_index}")
+                        #print(f"[DMX DEBUG]   {color}: offset={channel_offset}, absolute={dmx_channel_absolute}, buffer_idx={dmx_buffer_index}")
                         
                         if 0 <= dmx_buffer_index < 512:
                             old_value = self.dmx_buffer[dmx_buffer_index]
                             self.dmx_buffer[dmx_buffer_index] = max(0, min(255, value))
-                            print(f"[DMX DEBUG]   Buffer[{dmx_buffer_index}]: {old_value} -> {self.dmx_buffer[dmx_buffer_index]}")
-                        else:
-                            print(f"[DMX DEBUG]   ❌ Invalid buffer index: {dmx_buffer_index}")
-                    else:
-                        print(f"[DMX DEBUG]   ⚠ Color '{color}' not found in fixture channels")
+                            #print(f"[DMX DEBUG]   Buffer[{dmx_buffer_index}]: {old_value} -> {self.dmx_buffer[dmx_buffer_index]}")
+                        #else:
+                            #print(f"[DMX DEBUG]   ❌ Invalid buffer index: {dmx_buffer_index}")
+                    #else:
+                        #print(f"[DMX DEBUG]   ⚠ Color '{color}' not found in fixture channels")
                         
         except Exception as e:
             print(f"[DMX ERROR] Failed to apply channels to fixture {fixture.get('name', 'unknown')}: {e}")

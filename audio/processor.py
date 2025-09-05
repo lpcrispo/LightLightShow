@@ -309,8 +309,8 @@ class AudioProcessor:
                 self.auto_thresholds[band]['value'] = new_threshold
                 
                 # Debug occasionnel
-                if len(history) % 50 == 0:
-                    print(f"[AUTO-THRESHOLD] {band}: {new_threshold:.3f} (median={median:.3f}, iqr={iqr:.3f})")
+                #if len(history) % 50 == 0:
+                #    print(f"[AUTO-THRESHOLD] {band}: {new_threshold:.3f} (median={median:.3f}, iqr={iqr:.3f})")
 
     def _analyze_fade_to_black(self, band, level, current_time):
         """Analyse le niveau pour détecter un fade-to-black automatique"""
@@ -544,7 +544,7 @@ class AudioProcessor:
         if hasattr(self, 'artnet_manager') and self.artnet_manager:
             try:
                 if band == 'Bass' and event_type == 'peak':
-                    print("[FLASH] Sending kick flash to Art-Net!")
+                    #print("[FLASH] Sending kick flash to Art-Net!")
                     kick_fixtures = [f for f in self.artnet_manager.fixtures_config['fixtures']
                                    if f.get('responds_to_kicks', False)]
                     if kick_fixtures:
@@ -552,7 +552,7 @@ class AudioProcessor:
                         flash_scenes = ['flash-white', 'flash-red', 'flash-blue']
                         scene = random.choice(flash_scenes)
                         self.artnet_manager.apply_scene(scene, kick_fixtures)
-                        print(f"[FLASH] Applied {scene} to {len(kick_fixtures)} kick-responsive fixtures")
+                        #print(f"[FLASH] Applied {scene} to {len(kick_fixtures)} kick-responsive fixtures")
                         
             except Exception as e:
                 print(f"[EVENT] Error sending to ArtNet: {e}")
