@@ -8,6 +8,7 @@ from .kick_detector import KickDetector
 from .band_analyzer import BandAnalyzer
 from .bpm_detector import BPMDetector
 from .filters import AudioFilters
+from artnet.art_net_manager import ArtNetManager
 
 class AudioProcessor:
     def __init__(self, gain=0.5, smoothing_factor=0.4):
@@ -58,6 +59,9 @@ class AudioProcessor:
             }
             for band in self.freq_ranges.keys()
         }
+        
+        # AJOUT : Attribut manquant pour tracker les sustained actifs
+        self.sustained_bands = {}  # Track des bandes actuellement sustained
         
         # Configuration pour détecter les niveaux "soutenus" avec sensibilité accrue
         self.sustained_detection = {
@@ -431,22 +435,34 @@ class AudioProcessor:
 
     def _trigger_sustained_event(self, band, event_type, intensity):
         """Déclenche les événements de niveaux soutenus"""
-        if hasattr(self, 'artnet_manager') and self.artnet_manager:
-            try:
-                current_bpm = self.current_bpm if self.current_bpm > 0 else 120  # BPM par défaut
+        if event_type == "sustained_start":
+            print(f"[AUDIO] Sustained {band} started (intensity: {intensity:.2f})")
+            
+            # AJOUT : Tracker dans sustained_bands
+            self.sustained_bands[band] = {
+                'intensity': intensity,
+                'start_time': time.time()
+            }
+            
+            self.on_sustained_started(band, intensity)
+            
+        elif event_type == "sustained_end":
+            print(f"[AUDIO] Sustained {band} ended")
+            
+            # AJOUT : Retirer de sustained_bands
+            if band in self.sustained_bands:
+                del self.sustained_bands[band]
                 
-                if event_type == 'sustained_start':
-                    print(f"[SEQUENCE] Starting sequence for {band} at BPM {current_bpm}")
-                    self.artnet_manager.start_sequence(band, current_bpm, intensity)
-                elif event_type == 'sustained_end':
-                    print(f"[SEQUENCE] Stopping sequence for {band}")
-                    self.artnet_manager.stop_sequence(band)
-                elif event_type == 'sustained_update':
-                    # Mettre à jour l'intensité de la séquence en cours
-                    self.artnet_manager.update_sequence_intensity(band, intensity)
-                    
-            except Exception as e:
-                print(f"[SEQUENCE] Error: {e}")
+            self.on_sustained_ended(band)
+            
+        elif event_type == "sustained_update":
+            # AJOUT : Mettre à jour sustained_bands
+            if band in self.sustained_bands:
+                self.sustained_bands[band]['intensity'] = intensity
+                
+            # Mettre à jour l'intensité pendant le sustained
+            if hasattr(self, 'artnet_manager') and self.artnet_manager:
+                self.artnet_manager.update_sequence_intensity(band, intensity)
 
     def _analyze_band(self, band, level, threshold, audio_data=None):
         """
@@ -690,3 +706,35 @@ class AudioProcessor:
                 if hasattr(self.kick_detector, k):
                     setattr(self.kick_detector, k, v)
                     print(f"Kick param {k} set to {v}")
+
+    # AJOUT : Callbacks manquants pour l'intégration ArtNet
+    def on_kick_detected(self, intensity: float = 0.8):
+        """Callback déclenché lors de la détection d'un kick"""
+        if self.artnet_manager:
+            try:
+                # Déclencher le flash kick sur les fixtures kick-responsive
+                self.artnet_manager.apply_scene_to_band('flash-white', 'Bass', kick_responsive_only=True)
+                print(f"[AUDIO] Kick detected - flash triggered with intensity {intensity:.2f}")
+            except Exception as e:
+                print(f"[AUDIO] Error in kick callback: {e}")
+    
+    def on_sustained_started(self, band: str, intensity: float):
+        """Callback déclenché quand un niveau soutenu commence"""
+        if self.artnet_manager:
+            try:
+                result = self.artnet_manager.start_sequence_for_band(band, intensity)
+                if result:
+                    print(f"[AUDIO] Sustained {band} started - sequence triggered with intensity {intensity:.2f}")
+                else:
+                    print(f"[AUDIO] Failed to start sequence for {band}")
+            except Exception as e:
+                print(f"[AUDIO] Error in sustained_started callback: {e}")
+    
+    def on_sustained_ended(self, band: str):
+        """Callback déclenché quand un niveau soutenu se termine"""
+        if self.artnet_manager:
+            try:
+                self.artnet_manager.stop_sequence_for_band(band)
+                print(f"[AUDIO] Sustained {band} ended - sequence stopped")
+            except Exception as e:
+                print(f"[AUDIO] Error in sustained_ended callback: {e}")

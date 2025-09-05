@@ -191,3 +191,241 @@ ModuleNotFoundError: No module named 'audio.bmp_detector'
 2025-09-05 13:12:05,568 - __main__ - INFO - Working directory: C:\dev\LightLightShow
 2025-09-05 13:12:07,997 - __main__ - INFO - Application initialized successfully
 2025-09-05 13:12:28,439 - __main__ - INFO - Application shutdown
+2025-09-05 13:21:22,267 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:21:22,268 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:21:22,268 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:21:24,434 - __main__ - ERROR - Failed to start application: No module named 'artnet.art_net_manager'; 'artnet' is not a package
+2025-09-05 13:21:24,437 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 12, in <module>
+    from audio import AudioProcessor
+  File "c:\dev\LightLightShow\audio\__init__.py", line 1, in <module>
+    from .processor import AudioProcessor
+  File "c:\dev\LightLightShow\audio\processor.py", line 11, in <module>
+    from artnet.art_net_manager import ArtNetManager
+ModuleNotFoundError: No module named 'artnet.art_net_manager'; 'artnet' is not a package
+
+2025-09-05 13:21:24,437 - __main__ - INFO - Application shutdown
+2025-09-05 13:22:00,530 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:22:00,530 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:22:00,531 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:22:02,892 - __main__ - ERROR - Failed to start application: No module named 'artnet.art_net_manager'; 'artnet' is not a package
+2025-09-05 13:22:02,895 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 12, in <module>
+    from audio import AudioProcessor
+  File "c:\dev\LightLightShow\audio\__init__.py", line 1, in <module>
+    from .processor import AudioProcessor
+  File "c:\dev\LightLightShow\audio\processor.py", line 11, in <module>
+    from artnet.art_net_manager import ArtNetManager
+ModuleNotFoundError: No module named 'artnet.art_net_manager'; 'artnet' is not a package
+
+2025-09-05 13:22:02,896 - __main__ - INFO - Application shutdown
+2025-09-05 13:23:18,364 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:23:18,365 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:23:18,365 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:23:20,812 - __main__ - ERROR - Failed to start application: No module named 'dmx_controller'
+2025-09-05 13:23:20,817 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 12, in <module>
+    from audio import AudioProcessor
+  File "c:\dev\LightLightShow\audio\__init__.py", line 1, in <module>
+    from .processor import AudioProcessor
+  File "c:\dev\LightLightShow\audio\processor.py", line 11, in <module>
+    from artnet.art_net_manager import ArtNetManager
+  File "c:\dev\LightLightShow\artnet\__init__.py", line 1, in <module>
+    from .art_net_manager import ArtNetManager
+  File "c:\dev\LightLightShow\artnet\art_net_manager.py", line 6, in <module>
+    from dmx_controller import DMXController
+ModuleNotFoundError: No module named 'dmx_controller'
+
+2025-09-05 13:23:20,818 - __main__ - INFO - Application shutdown
+2025-09-05 13:25:21,713 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:25:21,714 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:25:21,714 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:25:24,095 - __main__ - ERROR - Failed to start application: attempted relative import beyond top-level package
+2025-09-05 13:25:24,100 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 12, in <module>
+    from audio import AudioProcessor
+  File "c:\dev\LightLightShow\audio\__init__.py", line 1, in <module>
+    from .processor import AudioProcessor
+  File "c:\dev\LightLightShow\audio\processor.py", line 11, in <module>
+    from artnet.art_net_manager import ArtNetManager
+  File "c:\dev\LightLightShow\artnet\__init__.py", line 1, in <module>
+    from .art_net_manager import ArtNetManager
+  File "c:\dev\LightLightShow\artnet\art_net_manager.py", line 8, in <module>
+    from .sequence_manager import SequenceManager
+  File "c:\dev\LightLightShow\artnet\sequence_manager.py", line 7, in <module>
+    from ..utils.file_manager import FileManager
+ImportError: attempted relative import beyond top-level package
+
+2025-09-05 13:25:24,100 - __main__ - INFO - Application shutdown
+2025-09-05 13:26:47,462 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:26:47,462 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:26:47,463 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:26:50,112 - __main__ - ERROR - Failed to start application: attempted relative import beyond top-level package
+2025-09-05 13:26:50,116 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 12, in <module>
+    from audio import AudioProcessor
+  File "c:\dev\LightLightShow\audio\__init__.py", line 1, in <module>
+    from .processor import AudioProcessor
+  File "c:\dev\LightLightShow\audio\processor.py", line 11, in <module>
+    from artnet.art_net_manager import ArtNetManager
+  File "c:\dev\LightLightShow\artnet\__init__.py", line 1, in <module>
+    from .art_net_manager import ArtNetManager
+  File "c:\dev\LightLightShow\artnet\art_net_manager.py", line 10, in <module>
+    from ..utils.file_manager import FileManager
+ImportError: attempted relative import beyond top-level package
+
+2025-09-05 13:26:50,118 - __main__ - INFO - Application shutdown
+2025-09-05 13:27:26,636 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:27:26,636 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:27:26,636 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:27:29,118 - __main__ - ERROR - Failed to start application: cannot import name 'ArtNetConfig' from 'artnet' (c:\dev\LightLightShow\artnet\__init__.py)
+2025-09-05 13:27:29,121 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 13, in <module>
+    from artnet import ArtNetManager, ArtNetConfig
+ImportError: cannot import name 'ArtNetConfig' from 'artnet' (c:\dev\LightLightShow\artnet\__init__.py)
+
+2025-09-05 13:27:29,121 - __main__ - INFO - Application shutdown
+2025-09-05 13:29:58,463 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:29:58,464 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:29:58,464 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:30:01,566 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:30:08,199 - __main__ - INFO - Application shutdown
+2025-09-05 13:33:35,935 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:33:35,936 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:33:35,936 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:33:38,878 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:33:42,736 - __main__ - INFO - Application shutdown
+2025-09-05 13:35:29,778 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:35:29,778 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:35:29,778 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:35:32,762 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:35:36,838 - __main__ - INFO - Application shutdown
+2025-09-05 13:38:14,848 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:38:14,849 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:38:14,849 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:38:17,863 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:38:21,551 - __main__ - INFO - Application shutdown
+2025-09-05 13:40:16,922 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:40:16,923 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:40:16,923 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:40:20,173 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:40:31,338 - __main__ - INFO - Application shutdown
+2025-09-05 13:46:38,050 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:46:38,050 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:46:38,050 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:46:40,634 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:49:10,150 - __main__ - INFO - Application shutdown
+2025-09-05 13:49:31,589 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:49:31,589 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:49:31,590 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:49:34,777 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:49:53,520 - __main__ - INFO - Application shutdown
+2025-09-05 13:53:16,463 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:53:16,463 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:53:16,464 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:53:19,476 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:53:54,255 - __main__ - INFO - Application shutdown
+2025-09-05 13:55:28,493 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:55:28,494 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:55:28,494 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:55:31,395 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:55:35,937 - __main__ - INFO - Application shutdown
+2025-09-05 13:56:44,224 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:56:44,225 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:56:44,225 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:56:46,781 - __main__ - INFO - Application initialized successfully
+2025-09-05 13:56:59,163 - __main__ - INFO - Application shutdown
+2025-09-05 13:59:45,516 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 13:59:45,517 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 13:59:45,517 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 13:59:48,431 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:00:09,869 - __main__ - INFO - Application shutdown
+2025-09-05 14:02:58,152 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:02:58,152 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:02:58,153 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:03:01,259 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:03:15,972 - __main__ - INFO - Application shutdown
+2025-09-05 14:07:27,869 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:07:27,869 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:07:27,869 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:07:30,745 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:07:57,401 - __main__ - INFO - Application shutdown
+2025-09-05 14:10:56,479 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:10:56,480 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:10:56,480 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:10:59,069 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:11:22,576 - __main__ - INFO - Application shutdown
+2025-09-05 14:12:44,687 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:12:44,688 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:12:44,688 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:12:47,739 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:13:06,778 - __main__ - INFO - Application shutdown
+2025-09-05 14:21:47,573 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:21:47,573 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:21:47,573 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:21:50,389 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:22:13,332 - __main__ - INFO - Application shutdown
+2025-09-05 14:31:32,689 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:31:32,690 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:31:32,690 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:31:36,567 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:32:05,940 - __main__ - INFO - Application shutdown
+2025-09-05 14:47:06,006 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:47:06,006 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:47:06,007 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:47:08,811 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:47:30,643 - __main__ - INFO - Application shutdown
+2025-09-05 14:48:18,116 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:48:18,116 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:48:18,117 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:48:20,375 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:48:24,129 - __main__ - INFO - Application shutdown
+2025-09-05 14:49:58,462 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:49:58,463 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:49:58,463 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:50:01,218 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:50:25,989 - __main__ - INFO - Application shutdown
+2025-09-05 14:56:38,968 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 14:56:38,969 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 14:56:38,969 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 14:56:41,422 - __main__ - INFO - Application initialized successfully
+2025-09-05 14:57:10,951 - __main__ - INFO - Application shutdown
+2025-09-05 15:09:01,535 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 15:09:01,535 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 15:09:01,535 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 15:09:04,541 - __main__ - INFO - Application initialized successfully
+2025-09-05 15:09:23,589 - __main__ - INFO - Application shutdown
+2025-09-05 15:21:46,141 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 15:21:46,141 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 15:21:46,141 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 15:21:48,423 - __main__ - INFO - Application initialized successfully
+2025-09-05 15:22:34,881 - __main__ - INFO - Application shutdown
+2025-09-05 15:23:58,423 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 15:23:58,424 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 15:23:58,425 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 15:24:01,324 - __main__ - INFO - Application initialized successfully
+2025-09-05 15:24:38,799 - __main__ - INFO - Application shutdown

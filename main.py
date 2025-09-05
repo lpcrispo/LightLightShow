@@ -53,5 +53,26 @@ def main():
     finally:
         logger.info("Application shutdown")
 
+"""Vérifier la configuration Art-Net"""
+
+def check_config():
+    try:
+        from config.artnet_config import ArtNetConfig
+        config = ArtNetConfig()
+        print(f"IP: {config.ip}")
+        print(f"Universe: {config.universe}")
+        print(f"Subnet: {config.subnet}")
+        
+        # Test avec l'ArtNetClient
+        from artnet.art_net_client import ArtNetClient
+        client = ArtNetClient(config)
+        print(f"Client target IP: {client.target_ip}")
+        
+    except Exception as e:
+        print(f"Erreur: {e}")
+        import traceback
+        traceback.print_exc()
+
 if __name__ == "__main__":
+    check_config()
     main()

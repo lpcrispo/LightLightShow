@@ -10,7 +10,7 @@ from .fixture_view import FixtureView
 
 # Imports des modules principaux
 from audio import AudioProcessor
-from artnet import ArtNetManager, ArtNetConfig
+from artnet import ArtNetManager
 
 # Imports des nouveaux modules utilitaires
 from utils import FileManager, Validator, ColorUtils
@@ -211,7 +211,7 @@ class MainWindow(tk.Tk):
         try:
             # Remettre tous les canaux à zéro
             self.artnet_manager.dmx_send_buffer = bytearray([0] * 512)
-            self.artnet_manager.send_dmx(self.artnet_manager.config.universe, 
+            self.artnet_manager.dmx_controller.send_dmx(self.artnet_manager.config.universe, 
                                        self.artnet_manager.dmx_send_buffer)
             print("✓ All fixtures cleared")
         except Exception as e:
@@ -285,7 +285,7 @@ class MainWindow(tk.Tk):
         except Exception as e:
             print(f"Error getting ArtNet config: {e}")
             # Retourner une configuration par défaut
-            from config import ArtNetConfig
+            from config.artnet_config import ArtNetConfig
             return ArtNetConfig.default()
 
     # Callbacks pour les sous-composants (méthodes maintenues)
