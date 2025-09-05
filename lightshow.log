@@ -23,3 +23,106 @@
 2025-09-05 11:20:46,683 - __main__ - INFO - Working directory: C:\dev\LightLightShow
 2025-09-05 11:20:48,969 - __main__ - INFO - Application initialized successfully
 2025-09-05 11:21:43,334 - __main__ - INFO - Application shutdown
+2025-09-05 11:30:20,294 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 11:30:20,294 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 11:30:20,294 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 11:30:22,917 - __main__ - ERROR - Failed to start application: AudioProcessor.__init__() got an unexpected keyword argument 'gain'
+2025-09-05 11:30:22,921 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 40, in main
+    app = MainWindow()
+  File "c:\dev\LightLightShow\views\main_window.py", line 47, in __init__
+    self._create_components()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\dev\LightLightShow\views\main_window.py", line 88, in _create_components
+    self.audio_processor = AudioProcessor(
+                           ~~~~~~~~~~~~~~^
+        gain=AudioConfig.DEFAULT_GAIN,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        smoothing_factor=AudioConfig.DEFAULT_SMOOTHING
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: AudioProcessor.__init__() got an unexpected keyword argument 'gain'
+
+2025-09-05 11:30:22,924 - __main__ - INFO - Application shutdown
+2025-09-05 11:34:52,907 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 11:34:52,907 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 11:34:52,908 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 11:34:55,311 - __main__ - ERROR - Failed to start application: BandAnalyzer.__init__() got an unexpected keyword argument 'bands'
+2025-09-05 11:34:55,314 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\views\main_window.py", line 98, in _create_components
+    self.audio_processor = AudioProcessor(
+                           ~~~~~~~~~~~~~~^
+        device_index=None,
+        ^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        event_callback=self._handle_audio_event
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "c:\dev\LightLightShow\audio\processor.py", line 32, in __init__
+    self.band_analyzer = BandAnalyzer(
+                         ~~~~~~~~~~~~^
+        samplerate=self.samplerate,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bands=[(b['low'], b['high']) for b in self.band_config['bands']]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: BandAnalyzer.__init__() got an unexpected keyword argument 'bands'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 40, in main
+    app = MainWindow()
+  File "c:\dev\LightLightShow\views\main_window.py", line 47, in __init__
+    self._create_components()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\dev\LightLightShow\views\main_window.py", line 108, in _create_components
+    self.audio_processor = AudioProcessor()
+                           ~~~~~~~~~~~~~~^^
+  File "c:\dev\LightLightShow\audio\processor.py", line 32, in __init__
+    self.band_analyzer = BandAnalyzer(
+                         ~~~~~~~~~~~~^
+        samplerate=self.samplerate,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bands=[(b['low'], b['high']) for b in self.band_config['bands']]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: BandAnalyzer.__init__() got an unexpected keyword argument 'bands'
+
+2025-09-05 11:34:55,315 - __main__ - INFO - Application shutdown
+2025-09-05 11:40:56,173 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 11:40:56,174 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 11:40:56,174 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 11:40:57,606 - __main__ - ERROR - Failed to start application: No module named 'audio.bmp_detector'
+2025-09-05 11:40:57,610 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 37, in main
+    from views.main_window import MainWindow
+  File "c:\dev\LightLightShow\views\__init__.py", line 1, in <module>
+    from .main_window import MainWindow
+  File "c:\dev\LightLightShow\views\main_window.py", line 12, in <module>
+    from audio import AudioProcessor
+  File "c:\dev\LightLightShow\audio\__init__.py", line 1, in <module>
+    from .processor import AudioProcessor
+  File "c:\dev\LightLightShow\audio\processor.py", line 8, in <module>
+    from .bmp_detector import BPMDetector
+ModuleNotFoundError: No module named 'audio.bmp_detector'
+
+2025-09-05 11:40:57,611 - __main__ - INFO - Application shutdown
+2025-09-05 11:41:55,573 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 11:41:55,573 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 11:41:55,573 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 11:41:59,154 - __main__ - INFO - Application initialized successfully
+2025-09-05 11:44:01,777 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 11:44:01,778 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 11:44:01,778 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 11:44:04,442 - __main__ - INFO - Application initialized successfully
+2025-09-05 11:44:52,715 - __main__ - INFO - Application shutdown
+2025-09-05 11:51:17,494 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 11:51:17,495 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 11:51:17,495 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 11:51:20,091 - __main__ - INFO - Application initialized successfully
+2025-09-05 11:52:07,537 - __main__ - INFO - Application shutdown
