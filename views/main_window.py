@@ -1,7 +1,9 @@
-import tkinter as tk
-from tkinter import ttk
+import sys
+import os
 import time
 import traceback
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 
 # Imports locaux
 from .audio_controls import AudioControlsFrame
@@ -142,29 +144,28 @@ class MainWindow(tk.Tk):
         self.fixture_view.grid(row=2, column=0, sticky="nsew")
 
     def _setup_test_controls(self):
-        """Configure les contrôles de test (désormais en haut à droite, vertical)"""
-        # Ancien: row=3, column=0 horizontal
-        test_frame = ttk.LabelFrame(self.mainframe, text="Actions / Tests")
-        # On l'ancre colonne 1, sur toute la hauteur des 3 premières lignes
-        test_frame.grid(row=0, column=1, rowspan=3, sticky="ne", padx=8, pady=5)
+        """Configure les contrôles de test"""
+        # Test controls frame (colonne de droite)
+        test_frame = ttk.LabelFrame(self.mainframe, text="Test Controls", padding="8")
+        test_frame.grid(row=1, column=1, sticky="nsew", padx=8, pady=5)
+        test_frame.grid_rowconfigure(6, weight=1)  # Allow expansion
+        
+        # Test buttons
+        ttk.Button(test_frame, text="Flash White (Bass)", 
+                  command=self.test_fixture_flash).pack(fill="x", pady=2)
+        ttk.Button(test_frame, text="Flash Red (All)", 
+                  command=self.test_red_flash).pack(fill="x", pady=2)
+        ttk.Button(test_frame, text="Clear All", 
+                  command=self.clear_all_fixtures).pack(fill="x", pady=2)
 
-        # Boutons en pile verticale
-        ttk.Button(test_frame, text="Test Flash White",
-                   command=self.test_fixture_flash).pack(fill='x', padx=5, pady=3)
-        ttk.Button(test_frame, text="Clear All",
-                   command=self.clear_all_fixtures).pack(fill='x', padx=5, pady=3)
-        ttk.Button(test_frame, text="Test Red",
-                   command=self.test_red_flash).pack(fill='x', padx=5, pady=3)
-        ttk.Button(test_frame, text="Save Config",
-                   command=self.save_configuration).pack(fill='x', padx=5, pady=8)
-        ttk.Button(test_frame, text="Load Config",
-                   command=self.load_configuration).pack(fill='x', padx=5, pady=3)
-
-        # (Optionnel) espacement final
-        ttk.Label(test_frame, text="").pack(pady=2)
-
-        # TEST IMMÉDIAT : Envoyer un flash blanc pour tester
-        self.after(2000, self.test_fixture_flash)
+        # CORRECTION : Initialiser les contrôles kick flash ICI dans le test_frame
+        self.init_kick_flash_controls(test_frame)
+        
+        # Sequence test section
+        seq_frame = ttk.LabelFrame(test_frame, text="Sequence Test", padding="5")
+        seq_frame.pack(fill="x", pady=5)
+        
+        # ...existing code...
 
     def save_configuration(self):
         """Sauvegarde la configuration actuelle"""
@@ -486,3 +487,159 @@ class MainWindow(tk.Tk):
             self.after(1000, self.clear_all_fixtures)
         except Exception as e:
             print(f"Error testing red flash: {e}")
+
+    def init_kick_flash_controls(self, parent_frame):
+        """Initialise les contrôles de configuration des flashs de kick"""
+        # CORRECTION : Utiliser le parent_frame passé en paramètre
+        kick_frame = ttk.LabelFrame(parent_frame, text="Kick Flash Config", padding="5")
+        kick_frame.pack(fill="x", pady=5)
+        
+        # Configuration en mode compact (grille)
+        config_frame = ttk.Frame(kick_frame)
+        config_frame.pack(fill="x", pady=2)
+        
+        # Mode de flash (ligne 0)
+        ttk.Label(config_frame, text="Mode:").grid(row=0, column=0, sticky="w", padx=2)
+        self.kick_mode_var = tk.StringVar(value="alternate")
+        mode_combo = ttk.Combobox(config_frame, textvariable=self.kick_mode_var, 
+                                 values=["single", "alternate", "random"], width=8)
+        mode_combo.grid(row=0, column=1, sticky="w", padx=2)
+        mode_combo.bind('<<ComboboxSelected>>', self.on_kick_mode_changed)
+        
+        # Intensité (ligne 0, colonne suivante)
+        ttk.Label(config_frame, text="Intensity:").grid(row=0, column=2, sticky="w", padx=(10,2))
+        self.kick_intensity_var = tk.DoubleVar(value=0.8)
+        intensity_scale = ttk.Scale(config_frame, from_=0.1, to=1.0, 
+                                   variable=self.kick_intensity_var, orient="horizontal", length=80)
+        intensity_scale.grid(row=0, column=3, sticky="w", padx=2)
+        intensity_scale.bind('<ButtonRelease-1>', self.on_kick_intensity_changed)
+        
+        # Sélection des scènes (ligne 1)
+        ttk.Label(config_frame, text="Scenes:").grid(row=1, column=0, sticky="nw", padx=2, pady=2)
+        
+        scenes_frame = ttk.Frame(config_frame)
+        scenes_frame.grid(row=1, column=1, columnspan=3, sticky="w", padx=2, pady=2)
+        
+        # Obtenir toutes les scènes de type flash
+        flash_scenes = []
+        if hasattr(self, 'artnet_manager') and self.artnet_manager:
+            try:
+                scenes_config = self.artnet_manager.scene_manager.scenes_config
+                scenes_list = scenes_config.get('scenes', []) if isinstance(scenes_config, dict) else scenes_config
+                flash_scenes = [s['name'] for s in scenes_list if s.get('type') == 'flash']
+            except Exception as e:
+                print(f"Error loading flash scenes: {e}")
+                flash_scenes = ['flash-white', 'flash-blue', 'flash-red']  # Fallback
+        
+        self.kick_scene_vars = {}
+        for i, scene in enumerate(flash_scenes):
+            var = tk.BooleanVar()
+            self.kick_scene_vars[scene] = var
+            # Affichage plus compact - nom court pour les cases à cocher
+            display_name = scene.replace('flash-', '').capitalize()
+            cb = ttk.Checkbutton(scenes_frame, text=display_name, variable=var,
+                               command=self.on_kick_scenes_changed)
+            cb.grid(row=i//3, column=i%3, sticky="w", padx=3, pady=1)
+        
+        # Boutons de contrôle (ligne 2)
+        control_frame = ttk.Frame(config_frame)
+        control_frame.grid(row=2, column=0, columnspan=4, sticky="ew", pady=3)
+        
+        ttk.Button(control_frame, text="Enable", width=6,
+                  command=lambda: self.toggle_kick_flash(True)).pack(side="left", padx=2)
+        ttk.Button(control_frame, text="Disable", width=6,
+                  command=lambda: self.toggle_kick_flash(False)).pack(side="left", padx=2)
+        ttk.Button(control_frame, text="Test Flash", width=8,
+                  command=self.test_kick_flash).pack(side="left", padx=2)
+        
+        # Status label (ligne 3)
+        self.kick_status_label = ttk.Label(config_frame, text="Loading...", font=("TkDefaultFont", 8))
+        self.kick_status_label.grid(row=3, column=0, columnspan=4, sticky="w", pady=2)
+        
+        # Charger la configuration actuelle après un délai pour s'assurer que tout est initialisé
+        self.after(100, self.load_kick_flash_config)
+    
+    def on_kick_mode_changed(self, event=None):
+        """Callback pour changement de mode"""
+        if hasattr(self, 'artnet_manager') and self.artnet_manager:
+            mode = self.kick_mode_var.get()
+            self.artnet_manager.configure_kick_flash(mode=mode)
+            self.update_kick_status()
+    
+    def on_kick_intensity_changed(self, event=None):
+        """Callback pour changement d'intensité"""
+        if hasattr(self, 'artnet_manager') and self.artnet_manager:
+            intensity = self.kick_intensity_var.get()
+            self.artnet_manager.configure_kick_flash(intensity=intensity)
+            self.update_kick_status()
+    
+    def on_kick_scenes_changed(self):
+        """Callback pour changement de sélection des scènes"""
+        try:
+            if hasattr(self, 'artnet_manager') and self.artnet_manager and hasattr(self, 'kick_scene_vars'):
+                selected_scenes = [scene for scene, var in self.kick_scene_vars.items() if var.get()]
+                if selected_scenes:  # Au moins une scène doit être sélectionnée
+                    self.artnet_manager.configure_kick_flash(scenes=selected_scenes)
+                    self.update_kick_status()
+                else:
+                    # Remettre au moins une scène cochée
+                    if 'flash-white' in self.kick_scene_vars:
+                        self.kick_scene_vars['flash-white'].set(True)
+                        self.artnet_manager.configure_kick_flash(scenes=['flash-white'])
+                        self.update_kick_status()
+        except Exception as e:
+            print(f"Error updating kick scenes: {e}")
+
+    def toggle_kick_flash(self, enabled: bool):
+        """Active/désactive les flashs de kick"""
+        if hasattr(self, 'artnet_manager') and self.artnet_manager:
+            self.artnet_manager.configure_kick_flash(enabled=enabled)
+            self.update_kick_status()
+    
+    def test_kick_flash(self):
+        """Teste un flash de kick"""
+        if hasattr(self, 'artnet_manager') and self.artnet_manager:
+            self.artnet_manager.send_kick_flash()
+    
+    def load_kick_flash_config(self):
+        """Charge la configuration actuelle des flashs de kick"""
+        try:
+            if hasattr(self, 'artnet_manager') and self.artnet_manager and hasattr(self.artnet_manager, 'kick_flash_manager'):
+                config = self.artnet_manager.get_kick_flash_config()
+                
+                # Mettre à jour les contrôles
+                if hasattr(self, 'kick_mode_var'):
+                    self.kick_mode_var.set(config.get('mode', 'alternate'))
+                if hasattr(self, 'kick_intensity_var'):
+                    self.kick_intensity_var.set(config.get('intensity', 0.8))
+                
+                # Mettre à jour les cases à cocher des scènes
+                if hasattr(self, 'kick_scene_vars'):
+                    active_scenes = config.get('scenes', [])
+                    for scene, var in self.kick_scene_vars.items():
+                        var.set(scene in active_scenes)
+                
+                self.update_kick_status()
+            else:
+                if hasattr(self, 'kick_status_label'):
+                    self.kick_status_label.config(text="ArtNet Manager not ready")
+        except Exception as e:
+            print(f"Error loading kick flash config: {e}")
+            if hasattr(self, 'kick_status_label'):
+                self.kick_status_label.config(text="Error loading config")
+
+    def update_kick_status(self):
+        """Met à jour le texte de statut"""
+        try:
+            if hasattr(self, 'artnet_manager') and self.artnet_manager and hasattr(self.artnet_manager, 'kick_flash_manager'):
+                summary = self.artnet_manager.kick_flash_manager.get_config_summary()
+                if hasattr(self, 'kick_status_label'):
+                    self.kick_status_label.config(text=summary)
+                    print(f"[DEBUG] Kick status updated: {summary}")
+            else:
+                if hasattr(self, 'kick_status_label'):
+                    self.kick_status_label.config(text="Manager not available")
+        except Exception as e:
+            print(f"Error updating kick status: {e}")
+            if hasattr(self, 'kick_status_label'):
+                self.kick_status_label.config(text="Status error")

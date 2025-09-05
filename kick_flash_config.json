@@ -1,0 +1,14 @@
+{
+  "kick_flash": {
+    "enabled": true,
+    "intensity": 0.8,
+    "mode": "alternate",
+    "scenes": [
+      "flash-white",
+      "flash-blue",
+      "flash-red"
+    ],
+    "random_seed": null,
+    "alternate_index": 0
+  }
+}

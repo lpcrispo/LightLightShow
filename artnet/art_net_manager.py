@@ -8,6 +8,7 @@ from .scene_manager import SceneManager
 from .sequence_manager import SequenceManager
 from .fixture_manager import FixtureManager
 from utils.file_manager import FileManager
+from .kick_flash_manager import KickFlashManager
 
 class ArtNetManager:
     """Gestionnaire principal Art-Net refactorisé"""
@@ -29,6 +30,9 @@ class ArtNetManager:
         # CORRECTION CRITIQUE : Connecter les callbacks
         self.sequence_manager.set_managers(self.scene_manager, self.dmx_controller)
         self.scene_manager.set_dmx_callback(self.dmx_controller.apply_channels_to_fixture)
+        
+        # AJOUT : Gestionnaire des flashs de kick
+        self.kick_flash_manager = KickFlashManager()
         
         # État global
         self.is_running = False
@@ -296,32 +300,49 @@ class ArtNetManager:
         else:
             print("[DEBUG] No active DMX channels")
     
-    def send_kick_flash(self, intensity: float = 0.8):
-        """Flash pour les kicks avec decay vers la séquence ou noir"""
+    def send_kick_flash(self, intensity: float = None):
+        """Flash pour les kicks avec configuration avancée"""
         try:
-            # Appliquer un flash blanc sur les fixtures kick-responsive de la bande Bass
+            # Vérifier si les flashs sont activés
+            if not self.kick_flash_manager.is_enabled():
+                return False
+            
+            # Utiliser l'intensité configurée si non spécifiée
+            if intensity is None:
+                intensity = self.kick_flash_manager.get_flash_intensity()
+            
+            # Obtenir la prochaine scène de flash
+            flash_scene_name = self.kick_flash_manager.get_next_flash_scene()
+            if not flash_scene_name:
+                print("[KICK] No flash scene configured")
+                return False
+            
+            # Vérifier que la scène existe
+            flash_scene = self.scene_manager.get_scene(flash_scene_name)
+            if not flash_scene:
+                print(f"[KICK] Flash scene '{flash_scene_name}' not found")
+                return False
+            
+            # Appliquer le flash sur les fixtures kick-responsive de la bande Bass
             fixtures = self.fixture_manager.get_fixtures_for_band('Bass')
             kick_fixtures = [f for f in fixtures if f.get('responds_to_kicks', False)]
             
             if kick_fixtures:
-                # Obtenir la scène de flash
-                flash_scene = self.scene_manager.get_scene('flash-white')
-                if not flash_scene:
-                    return False
-                
                 decay_duration = flash_scene.get('decay', 0.2)
                 
                 for fixture in kick_fixtures:
                     # Déterminer la couleur cible selon la séquence active
                     target_channels = self._get_target_channels_for_fixture(fixture)
                     
-                    # Appliquer le flash immédiatement
-                    flash_channels = {
-                        'red': int(255 * intensity),
-                        'green': int(255 * intensity), 
-                        'blue': int(255 * intensity),
-                        'white': int(255 * intensity)
-                    }
+                    # Appliquer les canaux de la scène avec l'intensité
+                    scene_channels = flash_scene.get('channels', {})
+                    flash_channels = {}
+                    
+                    for channel_short, base_value in scene_channels.items():
+                        channel_long = self.scene_manager.channel_mapping.get(channel_short, channel_short)
+                        final_value = int(base_value * intensity)
+                        flash_channels[channel_long] = max(0, min(255, final_value))
+                    
                     self.dmx_controller.apply_channels_to_fixture(fixture, flash_channels)
                     
                     # Configurer le decay
@@ -333,7 +354,7 @@ class ArtNetManager:
                     }
                 
                 self.dmx_controller.flush_buffer()
-                print(f"[KICK] Flash applied to {len(kick_fixtures)} kick-responsive fixtures with decay")
+                print(f"[KICK] Flash '{flash_scene_name}' applied to {len(kick_fixtures)} fixtures with decay")
                 return True
             else:
                 print("[KICK] No kick-responsive fixtures found")
@@ -343,12 +364,33 @@ class ArtNetManager:
             print(f"[KICK] Error in kick flash: {e}")
             return False
     
+    # AJOUT : Méthodes de configuration des flashs de kick
+    def configure_kick_flash(self, scenes: List[str] = None, mode: str = None, 
+                           intensity: float = None, enabled: bool = None):
+        """Configure les paramètres des flashs de kick"""
+        if scenes is not None:
+            self.kick_flash_manager.set_scenes(scenes)
+        if mode is not None:
+            self.kick_flash_manager.set_mode(mode)
+        if intensity is not None:
+            self.kick_flash_manager.set_intensity(intensity)
+        if enabled is not None:
+            self.kick_flash_manager.set_enabled(enabled)
+        
+        # Sauvegarder la configuration
+        self.kick_flash_manager.save_config()
+        print(f"[KICK] Configuration updated: {self.kick_flash_manager.get_config_summary()}")
+    
+    def get_kick_flash_config(self) -> Dict:
+        """Retourne la configuration actuelle des flashs de kick"""
+        return self.kick_flash_manager.config.copy()
+    
     def _get_target_channels_for_fixture(self, fixture):
         """Détermine les canaux cibles pour le decay selon la séquence active"""
         fixture_band = fixture.get('band', 'Bass')
         
         # Vérifier s'il y a une séquence active pour cette bande
-        if hasattr(self, 'sequence_manager') and fixture_band in self.sequence_manager.active_sequences:
+        if fixture_band in self.sequence_manager.active_sequences:
             seq_info = self.sequence_manager.active_sequences[fixture_band]
             sequence = seq_info['sequence']
             current_step_idx = seq_info['step_index']

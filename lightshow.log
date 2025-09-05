@@ -506,3 +506,34 @@ TypeError: AudioProcessor.__init__() got an unexpected keyword argument 'gain'
 2025-09-05 15:59:05,674 - __main__ - INFO - Working directory: C:\dev\LightLightShow
 2025-09-05 15:59:08,652 - __main__ - INFO - Application initialized successfully
 2025-09-05 16:00:52,199 - __main__ - INFO - Application shutdown
+2025-09-05 16:07:33,123 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:07:33,124 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:07:33,124 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:07:36,694 - __main__ - ERROR - Failed to start application: '_tkinter.tkapp' object has no attribute 'control_frame'
+2025-09-05 16:07:36,699 - __main__ - ERROR - Traceback (most recent call last):
+  File "c:\dev\LightLightShow\main.py", line 40, in main
+    app = MainWindow()
+  File "c:\dev\LightLightShow\views\main_window.py", line 48, in __init__
+    self._setup_test_controls()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\dev\LightLightShow\views\main_window.py", line 170, in _setup_test_controls
+    self.init_kick_flash_controls()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\dev\LightLightShow\views\main_window.py", line 495, in init_kick_flash_controls
+    kick_frame = ttk.LabelFrame(self.control_frame, text="Kick Flash Configuration", padding="5")
+                                ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 2552, in __getattr__
+    return getattr(self.tk, attr)
+AttributeError: '_tkinter.tkapp' object has no attribute 'control_frame'
+
+2025-09-05 16:07:36,700 - __main__ - INFO - Application shutdown
+2025-09-05 16:09:26,880 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:09:26,880 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:09:26,880 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:09:30,243 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:11:18,070 - __main__ - INFO - Application shutdown
+2025-09-05 16:15:32,716 - __main__ - INFO - Starting Light Light Show application
+2025-09-05 16:15:32,717 - __main__ - INFO - Python version: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-09-05 16:15:32,717 - __main__ - INFO - Working directory: C:\dev\LightLightShow
+2025-09-05 16:15:35,323 - __main__ - INFO - Application initialized successfully
+2025-09-05 16:18:01,654 - __main__ - INFO - Application shutdown
