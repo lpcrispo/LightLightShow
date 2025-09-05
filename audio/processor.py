@@ -788,9 +788,12 @@ class AudioProcessor:
         """Callback déclenché lors de la détection d'un kick"""
         if self.artnet_manager:
             try:
-                # Déclencher le flash kick sur les fixtures kick-responsive
-                self.artnet_manager.apply_scene_to_band('flash-white', 'Bass', kick_responsive_only=True)
-                print(f"[AUDIO] Kick detected - flash triggered with intensity {intensity:.2f}")
+                # Utiliser la nouvelle méthode avec decay intelligent
+                success = self.artnet_manager.send_kick_flash(intensity)
+                if success:
+                    print(f"[AUDIO] Kick detected - flash triggered with decay to sequence/black")
+                else:
+                    print(f"[AUDIO] Kick detected but flash failed")
             except Exception as e:
                 print(f"[AUDIO] Error in kick callback: {e}")
     

@@ -67,7 +67,10 @@ class ArtNetManager:
     def apply_scene(self, scene_name: str, fixtures: List[Dict]):
         """Applique une scène à une liste de fixtures"""
         #print(f"[ARTNET] Applying scene '{scene_name}' to {len(fixtures)} fixtures")
-        return self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, 1.0)
+        result = self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, 1.0)
+        # Faire le flush après application
+        self.dmx_controller.flush_buffer()
+        return result
     
     def apply_scene_to_band(self, scene_name: str, band: str, kick_responsive_only: bool = False):
         """Applique une scène à toutes les fixtures d'une bande"""
@@ -80,8 +83,10 @@ class ArtNetManager:
             print(f"No fixtures found for band {band}")
             return False
         
-        # CORRECTION : Utiliser le SceneManager aussi ici
-        return self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, 1.0)
+        # CORRECTION : Utiliser le SceneManager aussi ici avec flush
+        result = self.scene_manager.apply_scene_to_fixtures(scene_name, fixtures, 1.0)
+        self.dmx_controller.flush_buffer()
+        return result
     
     def start_sequence_for_band(self, band: str, intensity: float = 0.5):
         """Démarre une séquence pour une bande audio - CORRIGÉ"""
@@ -142,25 +147,39 @@ class ArtNetManager:
                 decay = fixture['decay']
                 fixture_name = fixture['name']
                 
-                # Appliquer l'effet de decay
-                if decay['type'] == 'linear':
-                    # Exemple de decay linéaire
-                    new_intensity = max(0, decay['start'] - decay['step'] * decay['ticks'])
-                    channels = {'red': new_intensity, 'green': new_intensity, 'blue': new_intensity, 'white': new_intensity}
-                    self.dmx_controller.apply_channels_to_fixture(fixture, channels)
-                    
-                    decay['ticks'] += 1  # Incrémenter le compteur de ticks
-                    effects_updated = True
+                # Calculer la progression du decay
+                elapsed = decay['ticks'] * 0.02  # Approximation du temps écoulé
+                progress = elapsed / decay['duration']
                 
-                # Condition pour retirer l'effet
-                if decay.get('duration', 0) > 0 and decay['ticks'] * decay['step'] >= decay['duration']:
+                if progress >= 1.0:
+                    # Decay terminé - appliquer la couleur cible
+                    target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
+                    self.dmx_controller.apply_channels_to_fixture(fixture, target_channels)
                     to_remove.append(fixture_name)
+                    effects_updated = True
+                else:
+                    # Interpoler entre la couleur de départ et la cible
+                    start_channels = decay['start_channels']
+                    target_channels = decay.get('target_channels', {'red': 0, 'green': 0, 'blue': 0, 'white': 0})
+                    
+                    interpolated_channels = {}
+                    for channel in ['red', 'green', 'blue', 'white']:
+                        start_val = start_channels.get(channel, 0)
+                        target_val = target_channels.get(channel, 0)
+                        interpolated_val = start_val + (target_val - start_val) * progress
+                        interpolated_channels[channel] = max(0, min(255, int(interpolated_val)))
+                    
+                    self.dmx_controller.apply_channels_to_fixture(fixture, interpolated_channels)
+                    decay['ticks'] += 1
+                    effects_updated = True
         
-        # Retirer les effets expirés
+        # Nettoyer les decays terminés
         for fixture_name in to_remove:
-            self.fixture_manager.remove_fixture_effect(fixture_name)
+            fixture = self.fixture_manager.get_fixture_by_name(fixture_name)
+            if fixture and 'decay' in fixture:
+                del fixture['decay']
         
-        if effects_updated or to_remove:
+        if effects_updated:
             self.dmx_controller.flush_buffer()
     
     def get_fixture_values(self) -> Dict[str, Dict[str, int]]:
@@ -278,15 +297,43 @@ class ArtNetManager:
             print("[DEBUG] No active DMX channels")
     
     def send_kick_flash(self, intensity: float = 0.8):
-        """Flash pour les kicks - méthode de compatibilité"""
+        """Flash pour les kicks avec decay vers la séquence ou noir"""
         try:
             # Appliquer un flash blanc sur les fixtures kick-responsive de la bande Bass
             fixtures = self.fixture_manager.get_fixtures_for_band('Bass')
             kick_fixtures = [f for f in fixtures if f.get('responds_to_kicks', False)]
             
             if kick_fixtures:
-                self.scene_manager.apply_scene_to_fixtures('flash-white', kick_fixtures, intensity)
-                print(f"[KICK] Flash applied to {len(kick_fixtures)} kick-responsive fixtures")
+                # Obtenir la scène de flash
+                flash_scene = self.scene_manager.get_scene('flash-white')
+                if not flash_scene:
+                    return False
+                
+                decay_duration = flash_scene.get('decay', 0.2)
+                
+                for fixture in kick_fixtures:
+                    # Déterminer la couleur cible selon la séquence active
+                    target_channels = self._get_target_channels_for_fixture(fixture)
+                    
+                    # Appliquer le flash immédiatement
+                    flash_channels = {
+                        'red': int(255 * intensity),
+                        'green': int(255 * intensity), 
+                        'blue': int(255 * intensity),
+                        'white': int(255 * intensity)
+                    }
+                    self.dmx_controller.apply_channels_to_fixture(fixture, flash_channels)
+                    
+                    # Configurer le decay
+                    fixture['decay'] = {
+                        'start_channels': flash_channels.copy(),
+                        'target_channels': target_channels,
+                        'duration': decay_duration,
+                        'ticks': 0
+                    }
+                
+                self.dmx_controller.flush_buffer()
+                print(f"[KICK] Flash applied to {len(kick_fixtures)} kick-responsive fixtures with decay")
                 return True
             else:
                 print("[KICK] No kick-responsive fixtures found")
@@ -295,3 +342,38 @@ class ArtNetManager:
         except Exception as e:
             print(f"[KICK] Error in kick flash: {e}")
             return False
+    
+    def _get_target_channels_for_fixture(self, fixture):
+        """Détermine les canaux cibles pour le decay selon la séquence active"""
+        fixture_band = fixture.get('band', 'Bass')
+        
+        # Vérifier s'il y a une séquence active pour cette bande
+        if hasattr(self, 'sequence_manager') and fixture_band in self.sequence_manager.active_sequences:
+            seq_info = self.sequence_manager.active_sequences[fixture_band]
+            sequence = seq_info['sequence']
+            current_step_idx = seq_info['step_index']
+            
+            # Obtenir le step actuel de la séquence
+            steps = sequence.get('steps', [])
+            if steps and current_step_idx < len(steps):
+                current_step = steps[current_step_idx]
+                scene_name = current_step.get('scene')
+                
+                if scene_name:
+                    scene = self.scene_manager.get_scene(scene_name)
+                    if scene:
+                        scene_channels = scene.get('channels', {})
+                        intensity = seq_info.get('intensity', 0.5)
+                        step_multiplier = current_step.get('intensity_multiplier', 1.0)
+                        
+                        # Convertir et appliquer l'intensité
+                        target_channels = {}
+                        for channel_short, value in scene_channels.items():
+                            channel_long = self.scene_manager.channel_mapping.get(channel_short, channel_short)
+                            final_value = int(value * intensity * step_multiplier)
+                            target_channels[channel_long] = max(0, min(255, final_value))
+                        
+                        return target_channels
+        
+        # Par défaut, revenir au noir
+        return {'red': 0, 'green': 0, 'blue': 0, 'white': 0}
